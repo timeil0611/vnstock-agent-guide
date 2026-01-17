@@ -39,6 +39,36 @@ You are a coding assistant helping users build Python applications using vnstock
 
 ---
 
+## 👤 User Configuration
+
+**USER_TIER**: {{USER_TIER}}  
+**USE_CASE**: {{USE_CASE}}  
+**API_KEY**: {{API_KEY_STATUS}}
+
+> 💡 **Note**: This information is auto-populated from the quick start notebook. If these values are not set, ask the user to specify their user tier (Free, Bronze, Silver, Golden) and their use case before providing code recommendations.
+
+---
+
+## 📚 Installation Guide
+
+### Stable Version (Recommended for Production)
+For most users who need a stable, reliable version:
+
+```bash
+pip install -U vnstock
+```
+
+### Beta/Development Version (Latest Features)
+For users who want the latest features (may be unstable):
+
+```bash
+pip install git+https://github.com/thinh-vu/vnstock
+```
+
+> 💡 **Installation Decision**: When users mention "stable", "production", or "official" → use PyPI version. When users mention "latest", "beta", "new features", or "development" → use GitHub version.
+
+---
+
 ## 📖 Documentation Structure
 
 ```
@@ -113,7 +143,7 @@ docs/
 from vnstock import Quote
 
 # Initialize Quote API
-quote = Quote(source="vci", symbol="VCB")
+quote = Quote(source="kbs", symbol="VCB")
 
 # Get historical data
 df = quote.history(
@@ -130,7 +160,7 @@ print(df.head())
 from vnstock_data import Quote
 
 # Premium features available
-quote = Quote(source="vci", symbol="VCB")
+quote = Quote(source="kbs", symbol="VCB")
 
 df = quote.history(
     start="2024-01-01",
@@ -157,11 +187,11 @@ print(df.head())
 from vnstock_data import Finance, Quote
 
 # Get financial data
-finance = Finance(source="vci", symbol="VCB")
+finance = Finance(source="kbs", symbol="VCB")
 ratios = finance.ratio(period="year")
 
 # Get price data
-quote = Quote(source="vci", symbol="VCB")
+quote = Quote(source="kbs", symbol="VCB")
 price_data = quote.history(start="2024-01-01", end="2024-12-31")
 
 print("Latest Financial Metrics:")
@@ -187,13 +217,13 @@ print(price_data[['time', 'close']].tail(10))
 from vnstock_data import Listing, Finance
 
 # Get VN30 stocks
-listing = Listing(source="vci")
+listing = Listing(source="kbs")
 vn30_stocks = listing.indices(index="VN30")
 
 print(f"VN30 stocks: {vn30_stocks}")
 
 # Get financial ratios for a specific stock
-finance = Finance(source="vci", symbol="VCB")
+finance = Finance(source="kbs", symbol="VCB")
 ratios = finance.ratio(period="year")
 print(f"VCB financial ratios:\n{ratios.tail(1)}")
 
@@ -219,7 +249,7 @@ from vnstock_ta import Indicators
 import pandas as pd
 
 # Get price data
-quote = Quote(source="vci", symbol="VCB")
+quote = Quote(source="kbs", symbol="VCB")
 df = quote.history(start="2024-01-01", end="2024-12-31", interval="1D")
 
 # Calculate indicators
