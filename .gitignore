@@ -1,6 +1,7 @@
 private_packages
 website docs
 .github/copilot-instruction.md
+vnstock_data
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
