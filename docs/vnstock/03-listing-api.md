@@ -25,9 +25,9 @@ Listing API cung cấp các phương thức tìm kiếm, lọc và lấy thông 
 | **all_covered_warrant()** | ✅ | ✅ | Cả hai đều Series |
 | **all_bonds()** | ✅ | ✅ | Cả hai đều Series |
 | **all_etf()** | ✅ | ❌ | **KBS độc quyền** |
-| **all_indices()** | ❌ | ✅ | **VCI độc quyền** |
 | **get_supported_groups()**  | ✅ | ❌ | **KBS độc quyền** |
-| **indices_by_group()** | ❌ | ✅ | **VCI độc quyền** |
+| **all_indices()** | ✅ | ✅ | chung |
+| **indices_by_group()** | ✅ | ✅ | chung |
 
 **Tổng số methods:**
 - **KBS**: 12 methods
@@ -640,65 +640,64 @@ print(supported_groups[['group_name', 'category']].head())
 4        HNX  Sàn giao dịch
 ```
 
-### 2. all_indices() - Tất Cả Chỉ Số (Chỉ VCI)
+### 2. all_indices() - Tất Cả Chỉ Số (Hỗ trợ từ tất cả sources qua `Listing`)
 
-Lấy danh sách tất cả các chỉ số tiêu chuẩn hóa với thông tin đầy đủ.
+Lấy danh sách tất cả các chỉ số tiêu chuẩn hóa với thông tin đầy đủ. Trước đây chỉ có trên VCI, từ phiên bản 3.4.1 hàm này đã được chuẩn hoá và có thể gọi từ bất kỳ adapter nào thông qua `Listing(source=...)`. Kết quả trả về là `pd.DataFrame` với các cột tiêu chuẩn: [`symbol`, `name`, `description`, `full_name`, `group`, `index_id`, `sector_id`] (nếu có).
 
-**Ví dụ:**
+**Ví dụ (VCI):**
 ```python
 # Khởi tạo với VCI
 listing = Listing(source="VCI")
 
-# Lấy tất cả chỉ số
-all_indices = listing.all_indices()
-print(f"Shape: {all_indices.shape}")  # (21, 7)
-print(f"Columns: {list(all_indices.columns)}")
-print(f"Dtypes:\n{all_indices.dtypes}")
-# Output:
-# Shape: (21, 7)
-# Columns: ['symbol', 'name', 'description', 'full_name', 'group', 'index_id', 'sector_id']
-# Dtypes:
-# symbol          object
-# name            object
-# description     object
-# full_name       object
-# group           object
-# index_id         int64
-# sector_id      float64
-print(all_indices[['symbol', 'name', 'group']].head())
+all_indices_vci = listing.all_indices()
+print(f"Shape: {all_indices_vci.shape}")
+print(all_indices_vci[['symbol', 'name', 'group']].head())
 ```
 
-**Output với VCI:**
-```
-  symbol   name         group
-0   VN30   VN30  HOSE Indices
-1  VNMID  VNMID  HOSE Indices
-2  VNSML  VNSML  HOSE Indices
-3  VN100  VN100  HOSE Indices
-4  VNALL  VNALL  HOSE Indices
+**Ví dụ (KBS):**
+```python
+# Khởi tạo với KBS
+listing = Listing(source="KBS")
+
+all_indices_kbs = listing.all_indices()
+print(f"Shape: {all_indices_kbs.shape}")
+print(all_indices_kbs[['symbol', 'name', 'group']].head())
 ```
 
-### 3. indices_by_group() - Chỉ Số Theo Nhóm (Chỉ VCI)
+**Lưu ý:**
+- Một số provider có thể không có đầy đủ `sector_id` hoặc metadata giống VCI; hàm sẽ trả về những chỉ số sẵn có và giữ định dạng chuẩn để thuận tiện cho phân tích.
 
-Lấy danh sách chỉ số theo nhóm tiêu chuẩn hóa.
+### 3. indices_by_group() - Chỉ Số Theo Nhóm (Hỗ trợ từ tất cả sources qua `Listing`)
+
+Lấy danh sách chỉ số theo nhóm tiêu chuẩn hóa (ví dụ: các chỉ số HOSE, chỉ số ngành/sector). Hàm này hiện đã hỗ trợ gọi từ `Listing` với mọi `source` (ví dụ: `kbs`, `vci`, `msn`) và trả về dữ liệu đã được chuẩn hoá.
 
 **Tham số:**
-- `group` (str): Tên nhóm
+- `group` (str): Tên nhóm (VD: `'HOSE'`, `'Sector Indices'`, ...)
 
-**Ví dụ:**
+**Ví dụ (HOSE từ KBS):**
 ```python
-# Khởi tạo với VCI
-listing = Listing(source="VCI")
+# Khởi tạo với KBS
+listing = Listing(source="KBS")
 
-# Lấy chỉ số theo nhóm
 indices = listing.indices_by_group(group="HOSE")
 if indices is not None:
     print(f"Shape: {indices.shape}")
     print(indices[['symbol', 'name']].head())
 else:
     print("Không có dữ liệu cho nhóm này")
-# Note: Method có thể trả về None nếu không có dữ liệu
 ```
+
+**Ví dụ (HOSE từ VCI):**
+```python
+# Khởi tạo với VCI
+listing = Listing(source="VCI")
+
+indices = listing.indices_by_group(group="HOSE")
+print(indices[['symbol', 'name']].head())
+```
+
+**Lưu ý:**
+- Một số source có thể cung cấp các nhóm khác nhau; nếu không có dữ liệu cho `group` truyền vào, hàm có thể trả về `None`.
 
 ## �📊 Performance & Caching
 
