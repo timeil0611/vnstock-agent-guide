@@ -15,7 +15,7 @@
 - **VCI**: 1 method
 
 **Khuyến nghị:**
-- **KBS**: Dữ liệu gọn gàng, ổn định hơn, phù hợp cho basic usage
+- **KBS**: Dữ liệu mới, áp dụng bộ tiêu chuẩn dữ liệu mới từ Vnstock, ổn định hơn và phù hợp cho sử dụng cả với Google Colab.
 - **VCI**: Dữ liệu cực kỳ chi tiết (77 columns), phù hợp cho phân tích sâu
 
 ## 🚀 Bắt Đầu

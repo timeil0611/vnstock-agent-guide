@@ -21,7 +21,10 @@ Lớp `Listing` cung cấp thông tin về các chứng khoán niêm yết tại
 ```python
 from vnstock_data import Listing
 
-# Khởi tạo với nguồn VCI (mặc định, đầy đủ tính năng)
+# Khởi tạo với nguồn KBS (nguồn thay thế cho VCI, hỗ trợ tốt trên môi trường Cloud như Colab, Kaggle)
+listing_kbs = Listing(source="kbs")
+
+# Khởi tạo với nguồn VCI (hàm tham chiếu đa dạng hơn KBS)
 listing = Listing(source="vci")
 
 # Khởi tạo với nguồn VND (nguồn bổ sung cung cấp danh sách cổ phiếu, ít method gọi hơn)
@@ -30,10 +33,10 @@ listing_vnd = Listing(source="vnd")
 
 ### Tham Số Khởi Tạo
 
-- `source` (str, tùy chọn): Nguồn dữ liệu - `"vci"` hoặc `"vnd"`. Mặc định là `"vci"`
+- `source` (str, tùy chọn): Nguồn dữ liệu - `"vci"`, `"vnd"`, `"kbs"`. Mặc định là `"kbs"`
 - `random_agent` (bool, tùy chọn): Sử dụng random user agent để tránh bị block. Mặc định là `False`
 
-**Ghi Chú**: VCI có hỗ trợ tất cả method, còn VND chỉ hỗ trợ `all_symbols()`. Xem phần "Ma Trận Nguồn Dữ Liệu Hỗ Trợ" ở cuối.
+**Ghi Chú**: VCI và KBS hỗ trợ hầu hết các method, còn VND chỉ hỗ trợ `all_symbols()`. Xem phần "Ma Trận Nguồn Dữ Liệu Hỗ Trợ" ở cuối.
 
 ## Các Phương Thức
 
@@ -204,8 +207,9 @@ s = listing.symbols_by_group(group='VN30')
 **Tham Số**
 - `group` (str): Tên nhóm/chỉ số. Các giá trị được hỗ trợ:
   - **Sàn giao dịch**: `'HOSE'`, `'HNX'`, `'UPCOM'`
-  - **Chỉ số chính**: `'VN30'`, `'VN100'`, `'HNX30'`
+  - **Chỉ số chính**: `'VN30'`, `'VN100'`, `'HNX30'`, `'HNXINDEX'`, `'UPCOMINDEX'`
   - **Chỉ số đặc biệt**: `'VNMidCap'`, `'VNSmallCap'`, `'VNAllShare'`, `'HNXCon'`, `'HNXFin'`, `'HNXLCap'`, `'HNXMSCap'`, `'HNXMan'`
+  - **Bộ chỉ số đầu tư (mới)**: `'VNHEAL'`, `'VNIND'`, `'VNIT'`, `'VNMAT'`, `'VNREAL'`, `'VNUTI'`, `'VNXALL'`, `'VNX50'`, `'VNSI'`, `'VNSML'`, `'VNMID'`, `'VNALL'` (Truy cập được từ mọi nguồn)
   - **ETF**: `'ETF'`
   - **Hợp đồng tương lai**: `'FU_INDEX'` (mã chỉ số hợp đồng tương lai)
   - **Chứng quyền**: `'CW'` (chứng quyền)
@@ -332,17 +336,17 @@ print(corp_bonds.head(3).tolist())
 
 > Số lượng mã có thể thay đổi theo thời gian, dữ liệu cập nhật từ nguồn được chỉ định.
 
-| Phương Thức | VCI | VND |
-|---|---|---|
-| `all_symbols()` | ✅ (1727 mã STOCK) | ✅ (1969 mã, tất cả loại) |
-| `symbols_by_industries()` | ✅ (1583 mã + thông tin ICB) | ❌ |
-| `symbols_by_exchange()` | ✅ (3150 mã + type/exchange) | ❌ |
-| `industries_icb()` | ✅ (155 ngành) | ❌ |
-| `symbols_by_group()` | ✅ (tất cả group) | ❌ |
-| `all_future_indices()` | ✅ (10 hợp đồng) | ❌ |
-| `all_government_bonds()` | ✅ (6 trái phiếu) | ❌ |
-| `all_covered_warrant()` | ✅ (305 chứng quyền) | ❌ |
-| `all_bonds()` | ✅ (81 trái phiếu) | ❌ |
+| Phương Thức | VCI | KBS | VND |
+|---|---|---|---|
+| `all_symbols()` | ✅ (1727 mã STOCK) | ✅ | ✅ (1969 mã, tất cả loại) |
+| `symbols_by_industries()` | ✅ (1583 mã + thông tin ICB) | ✅ | ❌ |
+| `symbols_by_exchange()` | ✅ (3150 mã + type/exchange) | ✅ | ❌ |
+| `industries_icb()` | ✅ (155 ngành) | ✅ | ❌ |
+| `symbols_by_group()` | ✅ (tất cả group) | ✅ | ❌ |
+| `all_future_indices()` | ✅ (10 hợp đồng) | ✅ | ❌ |
+| `all_government_bonds()` | ✅ (6 trái phiếu) | ✅ | ❌ |
+| `all_covered_warrant()` | ✅ (305 chứng quyền) | ✅ | ❌ |
+| `all_bonds()` | ✅ (81 trái phiếu) | ✅ | ❌ |
 
 ## VCI vs VND: So Sánh
 
@@ -352,6 +356,9 @@ print(corp_bonds.head(3).tolist())
 - **Khác**: Cả 9 method khác
 - **Ưu điểm**: Đầy đủ, có phân loại ngành ICB chi tiết, có chỉ số và công cụ khác
 
+### KBS Listing
+- Tương đương VCI, sử dụng nguồn dữ liệu KBS giúp tránh bị chặn IP khi chạy trên môi trường Cloud (Google Colab, Kaggle,...)
+
 ### VND Listing
 - **all_symbols()**: Trả về 1969 mã (tất cả loại: STOCK, BOND, CW, FUND, IFC, etc.)
   - Columns: symbol, type, exchange, status, company_name, company_name_eng, short_name, listed_date, delisted_date, company_id, isin, tax_code, short_name_eng, index_code (14 cột)
@@ -360,8 +367,9 @@ print(corp_bonds.head(3).tolist())
 - **Nhược điểm**: Không có phân loại ngành ICB, không có các method khác
 
 ### Khuyến Cáo
-- **Dùng VCI** nếu cần: Phân loại ngành ICB, danh sách chỉ số (VN30, VN100), danh sách công cụ khác (tương lai, chứng quyền, trái phiếu)
+- **Dùng VCI/KBS** nếu cần: Phân loại ngành ICB, danh sách chỉ số (VN30, VN100), danh sách công cụ khác (tương lai, chứng quyền, trái phiếu)
 - **Dùng VND** nếu cần: Lấy danh sách nhanh, thông tin trạng thái niêm yết chi tiết (listed_date/delisted_date/isin), lọc theo sàn
+- **Dùng KBS** nếu gặp lỗi chặn IP với VCI trên Cloud.
 
 ## Ví Dụ Thực Tế
 

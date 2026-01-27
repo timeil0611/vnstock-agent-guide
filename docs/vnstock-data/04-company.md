@@ -7,10 +7,14 @@ Lớp `Company` cung cấp thông tin chi tiết về các công ty niêm yết 
 ```python
 from vnstock_data import Company
 
+# Khởi tạo VCI (đơn giản, dễ phân tích)
 company = Company(source="vci", symbol="VCB")
+
+# Khởi tạo KBS (tương tự VCI, dùng cho Cloud/Jupyter để tránh chặn IP)
+company_kbs = Company(source="kbs", symbol="VCB")
 ```
 
-**Lưu ý**: Hiện tại chỉ **VCI** hỗ trợ Company.
+**Lưu ý**: VCI và KBS hỗ trợ đầy đủ các phương thức.
 
 ## Phương Thức
 
@@ -20,17 +24,20 @@ company = Company(source="vci", symbol="VCB")
 df = company.overview()
 ```
 
-Trả về: DataFrame với 10 cột (shape: 1, 10)
-- `symbol`: object (str) - Mã cổ phiếu
-- `id`: object (str) - ID công ty
-- `issue_share`: int64 - Số cổ phiếu phát hành
-- `history`: object (str) - Lịch sử công ty
-- `company_profile`: object (str) - Mô tả công ty
-- `icb_name3`: object (str) - Ngành cấp 3
-- `icb_name2`: object (str) - Ngành cấp 2
-- `icb_name4`: object (str) - Ngành cấp 4
-- `financial_ratio_issue_share`: int64 - Số CP phát hành (dùng cho tỷ lệ tài chính)
-- `charter_capital`: int64 - Vốn điều lệ
+**Thông Tin Các Cột Dữ Liệu (DataFrame)**
+
+| Cột (Column) | Kiểu Dữ Liệu (Dtype) | Mô Tả |
+|---|---|---|
+| `symbol` | object | Mã cổ phiếu |
+| `id` | object | ID công ty |
+| `issue_share` | int64 | Số lượng cổ phiếu lưu hành |
+| `history` | object | Lịch sử hình thành & phát triển |
+| `company_profile` | object | Giới thiệu công ty |
+| `icb_name3` | object | Tên ngành cấp 3 (ICB) |
+| `icb_name2` | object | Tên ngành cấp 2 (ICB) |
+| `icb_name4` | object | Tên ngành cấp 4 (ICB) |
+| `financial_ratio_issue_share` | int64 | Số lượng CP dùng tính chỉ số tài chính |
+| `charter_capital` | int64 | Vốn điều lệ |
 
 ### shareholders() - Cổ Đông Lớn
 
@@ -38,12 +45,15 @@ Trả về: DataFrame với 10 cột (shape: 1, 10)
 df = company.shareholders()
 ```
 
-Trả về: DataFrame với 5 cột
-- `id`: object (str) - ID cổ đông
-- `share_holder`: object (str) - Tên cổ đông
-- `quantity`: int64 - Số cổ phần sở hữu
-- `share_own_percent`: float64 - Tỷ lệ sở hữu (%)
-- `update_date`: object (str) - Ngày cập nhật
+**Thông Tin Các Cột Dữ Liệu (DataFrame)**
+
+| Cột (Column) | Kiểu Dữ Liệu (Dtype) | Mô Tả |
+|---|---|---|
+| `id` | object | ID cổ đông |
+| `share_holder` | object | Tên cổ đông |
+| `quantity` | int64 | Số lượng cổ phần sở hữu |
+| `share_own_percent` | float64 | Tỷ lệ sở hữu (ví dụ: 0.15 là 15%) |
+| `update_date` | object | Ngày cập nhật dữ liệu |
 
 **Ví dụ output** (3 cổ đông lớn VCB):
 ```
@@ -62,14 +72,17 @@ df = company.officers(filter_by='working')
 **Tham số**:
 - `filter_by`: `'working'` (đang làm), `'resigned'` (đã nghỉ), `'all'` - Mặc định là `'working'`
 
-Trả về: DataFrame với 7 cột
-- `id`: object (str) - ID người quản lý
-- `officer_name`: object (str) - Tên người
-- `officer_position`: object (str) - Vị trí chính
-- `position_short_name`: object (str) - Tên vị trí viết tắt
-- `update_date`: object (str) - Ngày cập nhật
-- `officer_own_percent`: float64 - Tỷ lệ cổ phần sở hữu (%)
-- `quantity`: int64 - Số cổ phần sở hữu
+**Thông Tin Các Cột Dữ Liệu (DataFrame)**
+
+| Cột (Column) | Kiểu Dữ Liệu (Dtype) | Mô Tả |
+|---|---|---|
+| `id` | object | ID nhân sự |
+| `officer_name` | object | Tên nhân sự |
+| `officer_position` | object | Chức vụ đầy đủ |
+| `position_short_name` | object | Chức vụ viết tắt |
+| `update_date` | object | Ngày cập nhật |
+| `officer_own_percent` | float64 | Tỷ lệ sở hữu cổ phần |
+| `quantity` | int64 | Số lượng cổ phần sở hữu |
 
 **Ví dụ output** (3 người quản lý VCB):
 ```
@@ -85,12 +98,15 @@ Trả về: DataFrame với 7 cột
 df = company.subsidiaries()
 ```
 
-Trả về: DataFrame với 5 cột
-- `id`: object (str) - ID công ty con
-- `sub_organ_code`: object (str) - Mã công ty con
-- `ownership_percent`: float64 - Tỷ lệ sở hữu (%)
-- `organ_name`: object (str) - Tên công ty con/liên kết
-- `type`: object (str) - Loại ('công ty con' hoặc 'công ty liên kết')
+**Thông Tin Các Cột Dữ Liệu (DataFrame)**
+
+| Cột (Column) | Kiểu Dữ Liệu (Dtype) | Mô Tả |
+|---|---|---|
+| `id` | object | ID công ty con |
+| `sub_organ_code` | object | Mã tổ chức liên quan |
+| `ownership_percent` | float64 | Tỷ lệ sở hữu |
+| `organ_name` | object | Tên công ty con/liên kết |
+| `type` | object | Loại hình ('công ty con', 'công ty liên kết') |
 
 **Ví dụ output** (3 công ty con của VCB):
 ```
@@ -106,20 +122,23 @@ Trả về: DataFrame với 5 cột
 df = company.events()
 ```
 
-Trả về: DataFrame với 13 cột
-- `id`: object (str) - ID sự kiện
-- `event_title`: object (str) - Tiêu đề sự kiện
-- `en__event_title`: object (str) - Tiêu đề sự kiện Tiếng Anh
-- `public_date`: object (str) - Ngày thông báo
-- `issue_date`: object (str) - Ngày thanh toán
-- `source_url`: object (str) - Đường dẫn nguồn
-- `event_list_code`: object (str) - Mã loại sự kiện
-- `ratio`: float64 - Tỉ lệ sự kiện (nếu có, NULL nếu không)
-- `value`: float64 - Giá trị sự kiện (nếu có, NULL nếu không)
-- `record_date`: object (str) - Ngày đăng ký cuối cùng
-- `exright_date`: object (str) - Ngày giao dịch không hưởng quyền
-- `event_list_name`: object (str) - Tên loại sự kiện (ví dụ: 'Trả cổ tức bằng tiền mặt')
-- `en__event_list_name`: object (str) - Tên loại sự kiện Tiếng Anh
+**Thông Tin Các Cột Dữ Liệu (DataFrame)**
+
+| Cột (Column) | Kiểu Dữ Liệu (Dtype) | Mô Tả |
+|---|---|---|
+| `id` | object | ID sự kiện |
+| `event_title` | object | Tiêu đề sự kiện (Tiếng Việt) |
+| `en__event_title` | object | Tiêu đề sự kiện (English) |
+| `public_date` | object | Ngày công bố |
+| `issue_date` | object | Ngày thực hiện/thanh toán |
+| `source_url` | object | Link nguồn tin |
+| `event_list_code` | object | Mã loại sự kiện |
+| `ratio` | float64 | Tỷ lệ thực hiện (nếu có) |
+| `value` | float64 | Giá trị (tiền/cổ phiếu) |
+| `record_date` | object | Ngày đăng ký cuối cùng |
+| `exright_date` | object | Ngày giao dịch không hưởng quyền |
+| `event_list_name` | object | Tên loại sự kiện |
+| `en__event_list_name` | object | Tên loại sự kiện (English) |
 
 ### news() - Tin Tức
 
@@ -127,25 +146,28 @@ Trả về: DataFrame với 13 cột
 df = company.news()
 ```
 
-Trả về: DataFrame với 18 cột
-- `id`: object (str) - ID tin tức
-- `news_title`: object (str) - Tiêu đề tin
-- `news_sub_title`: object (str) - Phụ đề tin
-- `friendly_sub_title`: object (str) - Phụ đề thân thiện
-- `news_image_url`: object (str) - Đường dẫn ảnh
-- `news_source_link`: object (str) - Đường dẫn nguồn
-- `created_at`: object (str) - Ngày tạo
-- `public_date`: int64 - Timestamp ngày công bố
-- `updated_at`: object (str) - Ngày cập nhật
-- `lang_code`: object (str) - Mã ngôn ngữ
-- `news_id`: object (str) - ID tin (khác)
-- `news_short_content`: object (str) - Nội dung tóm tắt
-- `news_full_content`: object (str) - Nội dung đầy đủ
-- `close_price`: int64 - Giá đóng cửa khi tin được công bố
-- `ref_price`: int64 - Giá tham chiếu
-- `floor`: int64 - Giá sàn
-- `ceiling`: int64 - Giá trần
-- `price_change_pct`: float64 - % thay đổi giá
+**Thông Tin Các Cột Dữ Liệu (DataFrame)**
+
+| Cột (Column) | Kiểu Dữ Liệu (Dtype) | Mô Tả |
+|---|---|---|
+| `id` | object | ID tin tức |
+| `news_title` | object | Tiêu đề tin |
+| `news_sub_title` | object | Phụ đề |
+| `friendly_sub_title` | object | Tiêu đề thân thiện URL |
+| `news_image_url` | object | URL ảnh minh họa |
+| `news_source_link` | object | Link gốc |
+| `created_at` | object | Thời gian tạo |
+| `public_date` | int64 | Thời gian công bố (timestamp) |
+| `updated_at` | object | Thời gian cập nhật |
+| `lang_code` | object | Ngôn ngữ ('vi', 'en') |
+| `news_id` | object | Mã tin |
+| `news_short_content` | object | Tóm tắt nội dung |
+| `news_full_content` | object | Nội dung đầy đủ (HTML) |
+| `close_price` | int64 | Giá đóng cửa phiên liên quan |
+| `ref_price` | int64 | Giá tham chiếu |
+| `floor` | int64 | Giá sàn |
+| `ceiling` | int64 | Giá trần |
+| `price_change_pct` | float64 | % Thay đổi giá |
 
 ### reports() - Báo Cáo Phân Tích
 
@@ -153,11 +175,14 @@ Trả về: DataFrame với 18 cột
 df = company.reports()
 ```
 
-Trả về: DataFrame với 4 cột
-- `date`: object (str) - Ngày báo cáo (ISO 8601 format)
-- `description`: object (str) - Mô tả báo cáo
-- `link`: object (str) - Đường dẫn đến báo cáo
-- `name`: object (str) - Tiêu đề báo cáo
+**Thông Tin Các Cột Dữ Liệu (DataFrame)**
+
+| Cột (Column) | Kiểu Dữ Liệu (Dtype) | Mô Tả |
+|---|---|---|
+| `date` | object | Ngày báo cáo |
+| `description` | object | Mô tả chi tiết |
+| `link` | object | Link tải báo cáo (PDF) |
+| `name` | object | Tên báo cáo |
 
 ### trading_stats() - Thống Kê Giao Dịch
 
@@ -165,31 +190,34 @@ Trả về: DataFrame với 4 cột
 df = company.trading_stats()
 ```
 
-Trả về: DataFrame với 24 cột
-- `symbol`: object (str) - Mã cổ phiếu
-- `exchange`: object (str) - Sàn giao dịch (ví dụ: 'HOSE')
-- `ev`: int64 - Giá trị doanh nghiệp (Enterprise Value)
-- `ceiling`: int64 - Giá trần
-- `floor`: int64 - Giá sàn
-- `ref_price`: int64 - Giá tham chiếu
-- `open`: int64 - Giá mở cửa
-- `match_price`: int64 - Giá khớp
-- `close_price`: int64 - Giá đóng cửa
-- `price_change`: int64 - Thay đổi giá tuyệt đối
-- `price_change_pct`: float64 - % thay đổi giá
-- `high`: int64 - Giá cao nhất
-- `low`: int64 - Giá thấp nhất
-- `total_volume`: int64 - Tổng khối lượng giao dịch
-- `high_price_1y`: int64 - Giá cao nhất 1 năm
-- `low_price_1y`: int64 - Giá thấp nhất 1 năm
-- `pct_low_change_1y`: float64 - % từ thấp nhất 1 năm
-- `pct_high_change_1y`: float64 - % từ cao nhất 1 năm
-- `foreign_volume`: int64 - Khối lượng nhà đầu tư nước ngoài
-- `foreign_room`: int64 - "Room ngoại" (sở hữu tối đa mà nhà đầu tư nước ngoài được phép nắm giữ)
-- `avg_match_volume_2w`: int64 - Khối lượng giao dịch trung bình 2 tuần
-- `foreign_holding_room`: int64 - "Room ngoại" đang nắm giữ
-- `current_holding_ratio`: float64 - Sở hữu nước ngoài (x100%)
-- `max_holding_ratio`: float64 - Sở hữu nước ngoài tối đa (x100%)
+**Thông Tin Các Cột Dữ Liệu (DataFrame)**
+
+| Cột (Column) | Kiểu Dữ Liệu (Dtype) | Mô Tả |
+|---|---|---|
+| `symbol` | object | Mã cổ phiếu |
+| `exchange` | object | Sàn giao dịch |
+| `ev` | int64 | Giá trị doanh nghiệp (Enterprise Value) |
+| `ceiling` | int64 | Giá trần |
+| `floor` | int64 | Giá sàn |
+| `ref_price` | int64 | Giá tham chiếu |
+| `open` | int64 | Giá mở cửa |
+| `match_price` | int64 | Giá khớp lệnh hiện tại |
+| `close_price` | int64 | Giá đóng cửa |
+| `price_change` | int64 | Thay đổi giá (số tuyệt đối) |
+| `price_change_pct` | float64 | % Thay đổi giá |
+| `high` | int64 | Giá cao nhất |
+| `low` | int64 | Giá thấp nhất |
+| `total_volume` | int64 | Tổng khối lượng giao dịch |
+| `high_price_1y` | int64 | Giá cao nhất 52 tuần |
+| `low_price_1y` | int64 | Giá thấp nhất 52 tuần |
+| `pct_low_change_1y` | float64 | % Thay đổi so với đáy 1 năm |
+| `pct_high_change_1y` | float64 | % Thay đổi so với đỉnh 1 năm |
+| `foreign_volume` | int64 | Khối lượng NN mua bán khớp lệnh |
+| `foreign_room` | int64 | Tổng Room NN |
+| `avg_match_volume_2w` | int64 | KLGD trung bình 2 tuần (10 phiên) |
+| `foreign_holding_room` | int64 | Room NN còn lại |
+| `current_holding_ratio` | float64 | Tỷ lệ sở hữu NN hiện tại |
+| `max_holding_ratio` | float64 | Tỷ lệ sở hữu NN tối đa |
 
 ### ratio_summary() - Tóm Tắt Chỉ Số Tài Chính
 
@@ -197,14 +225,41 @@ Trả về: DataFrame với 24 cột
 df = company.ratio_summary()
 ```
 
-Trả về: DataFrame với 46 cột chứa các chỉ số tài chính chính:
-- Các chỉ số định giá: `pe`, `pb`, `ps`, `pcf` (float64)
-- Các chỉ số lợi suất: `roe`, `roa`, `roic` (float64)
-- Các chỉ số tăng trưởng: `revenue_growth`, `net_profit_growth` (float64)
-- Các chỉ số khác: `dividend`, `eps`, `bvps`, `ev_per_ebitda` (float64)
-- Dữ liệu cơ bản: `symbol`, `year_report`, `length_report`, `update_date`, `charter_capital`, `issue_share` (object/int64)
+**Thông Tin Các Cột Dữ Liệu (DataFrame)**
 
-Ghi chú: Một số cột có thể NULL (object) nếu chưa có dữ liệu. Một số cột chưa được chuẩn hoá hoàn toàn về cách trình bày.
+Một số chỉ số tài chính cơ bản và định giá quan trọng:
+
+| Cột (Column) | Kiểu Dữ Liệu | Mô Tả |
+|---|---|---|
+| `symbol` | object | Mã cổ phiếu |
+| `year_report` | int64 | Năm báo cáo gần nhất |
+| `length_report` | int64 | Số kỳ báo cáo |
+| `update_date` | int64 | Ngày cập nhật |
+| `revenue` | int64 | Doanh thu |
+| `revenue_growth` | float64 | Tăng trưởng doanh thu |
+| `net_profit` | int64 | Lợi nhuận ròng |
+| `net_profit_growth` | float64 | Tăng trưởng lợi nhuận |
+| `gross_margin` | int64 | Biên lợi nhuận gộp |
+| `net_profit_margin` | float64 | Biên lợi nhuận ròng |
+| `roe` | float64 | Return on Equity |
+| `roa` | float64 | Return on Assets |
+| `roic` | int64 | Return on Invested Capital |
+| `pe` | float64 | Price/Earnings |
+| `pb` | float64 | Price/Book |
+| `ps` | float64 | Price/Sales |
+| `pcf` | float64 | Price/Cash Flow |
+| `eps` | float64 | Earnings Per Share |
+| `eps_ttm` | float64 | EPS Trailing 12 months |
+| `current_ratio` | int64 | Tỷ số thanh khoản hiện hành |
+| `quick_ratio` | int64 | Tỷ số thanh khoản nhanh |
+| `cash_ratio` | int64 | Tỷ số thanh khoản tiền mặt |
+| `debt_equity (de)` | float64 | Nợ/Vốn chủ sở hữu |
+| `dividend` | int64 | Cổ tức |
+| `charter_capital` | int64 | Vốn điều lệ |
+| `issue_share` | int64 | Số lượng cổ phiếu |
+| ... | ... | (Tổng cộng ~45 cột) |
+
+*Ghi chú: Các cột `dtype=object` (ví dụ `interest_coverage`) có thể chứa giá trị NULL hoặc chuỗi.*
 
 ## Ví Dụ
 
@@ -249,16 +304,16 @@ print(f"Khối lượng: {stats['total_volume'].values[0]:,.0f}")
 
 ## Ma Trận Support
 
-| Phương Thức | VCI |
-|---|:---:|
-| overview | ✅ |
-| shareholders | ✅ |
-| officers | ✅ |
-| subsidiaries | ✅ |
-| events | ✅ |
-| news | ✅ |
-| reports | ✅ |
-| trading_stats | ✅ |
-| ratio_summary | ✅ |
+| Phương Thức | VCI | KBS |
+|---|:---:|:---:|
+| overview | ✅ | ✅ |
+| shareholders | ✅ | ✅ |
+| officers | ✅ | ✅ |
+| subsidiaries | ✅ | ✅ |
+| events | ✅ | ✅ |
+| news | ✅ | ✅ |
+| reports | ✅ | ✅ |
+| trading_stats | ✅ | ✅ |
+| ratio_summary | ✅ | ✅ |
 
 **Khuyến Nghị**: Luôn sử dụng VCI cho Company data.

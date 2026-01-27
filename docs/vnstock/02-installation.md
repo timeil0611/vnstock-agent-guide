@@ -59,7 +59,7 @@ pip install pandas requests beautifulsoup4 lxml pydantic tenacity \
     python-dateutil aiohttp tqdm packaging python-dotenv
 ```
 
-## � Xác Thực API Key
+## Xác Thực API Key
 
 VNStock hỗ trợ các cấp độ sử dụng khác nhau với giới hạn requests tương ứng:
 
@@ -404,7 +404,7 @@ my_project/
 
 ```
 vnstock>=3.4.0
-vnai>=2.3.0
+vnai>=2.3.9
 pandas>=1.3.0
 numpy>=1.20.0
 matplotlib>=3.3.0

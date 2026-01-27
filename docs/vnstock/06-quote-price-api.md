@@ -6,7 +6,8 @@ Quote API cung cấp các phương thức lấy dữ liệu giá chứng khoán,
 
 - **Giá lịch sử (Historical Data)**: OHLCV data từ các khoảng thời gian khác nhau
 - **Dữ liệu trong ngày (Intraday)**: Giá khớp lệnh thực tế theo từng tick
-- **Độ sâu giá (Price Depth)**: Thống kê khối lượng theo mức giá (chỉ VCI)
+- **Bảng giá realtime (Price Board)**: Giá mua/bán, khối lượng hiện tại
+- **Dư mua - Dư bán (Price Depth)**: Order book, mức bid/ask
 
 ### 🚀 Quick Start
 
@@ -94,9 +95,9 @@ Ví dụ:
 2  2024-01-03  21.50  21.90  21.30  21.60   1567890
 ```
 
-## 🔄 Các Interval (Khung Thời Gian)
+## 🔄 Khung Thời Gian Lấy Mẫu
 
-### Supported Intervals
+### Khung thời gian hỗ trợ
 
 Cả KBS và VCI đều hỗ trợ các interval sau với nhiều định dạng khác nhau:
 
@@ -286,7 +287,7 @@ print(df_combined[['time', 'open', 'high', 'low', 'close', 'volume']].head())
 
 ### 2. intraday() - Dữ Liệu Khớp Lệnh Trong Ngày
 
-Lấy dữ liệu khớp lệnh thực tế theo từng phút/giây trong ngày.
+Lấy dữ liệu khớp lệnh thực tế theo từng tick trong ngày.
 
 **Parameters:**
 

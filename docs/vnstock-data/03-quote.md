@@ -4,9 +4,10 @@
 
 Lớp `Quote` cung cấp dữ liệu giá cổ phiếu theo thời gian:
 
-- **History**: Giá lịch sử OHLCV (Open, High, Low, Close, Volume) đã điều chỉnh theo ngày, tuần, tháng hoặc phút
-- **Intraday**: Khớp lệnh chi tiết theo từng phút trong ngày
-- **Price Depth**: Bước giá và khối lượng (dư mua, dư bán) tại các mức giá
+- **History**: Giá lịch sử OHLCV (Open, High, Low, Close, Volume) đã điều chỉnh theo ngày, tuần, tháng hoặc phút.
+- **Intraday**: Khớp lệnh chi tiết theo tất cả giao dịch phát sinh trong ngày. Dữ liệu chỉ có sẵn cho ngày giao dịch gần nhất.
+- **Price Depth**: Bước giá và khối lượng (dư mua, dư bán) tại các mức giá.
+- **Hỗ trợ Index**: Các chỉ số thị trường (VNINDEX, VN30,...) và tự động chuyển đổi mã phái sinh cũ sang mới.
 
 ### Ứng Dụng Phổ Biến
 
@@ -23,17 +24,20 @@ from vnstock_data import Quote
 # Cách 1: Qua Adapter (cú pháp dễ nhớ)
 quote = Quote(source="vci", symbol="VCB")
 
-# Cách 2: Qua Adapter với VND (cú pháp dễ nhớ)
+# Cách 2: Qua Adapter với nguồn KBS (dùng cho Cloud)
+quote_kbs = Quote(source="kbs", symbol="VCB")
+
+# Cách 3: Qua Adapter với VND (cú pháp dễ nhớ)
 quote_vnd = Quote(source="vnd", symbol="VCB")
 
-# Cách 3: Import trực tiếp từ nguồn (cố định, phải hiểu cấu trúc thư **viện**)
+# Cách 4: Import trực tiếp từ nguồn (cố định, phải hiểu cấu trúc thư **viện**)
 from vnstock_data.explorer.vci import Quote
 quote = Quote(symbol="VCB")
 ```
 
 ### Tham Số Khởi Tạo
 
-- `source` (str): Nguồn dữ liệu (`"vci"`, `"vnd"`, `"mas"`)
+- `source` (str): Nguồn dữ liệu (`"vci"`, `"kbs"`, `"vnd"`, `"mas"`)
 - `symbol` (str): Mã chứng khoán (ví dụ: `"VCB"`, `"VN30"`, `"VNINDEX"`). Mã có thể viết hoa hoặc thường.
 
 ### Các Mã Hỗ Trợ
@@ -57,7 +61,7 @@ quote = Quote(symbol="VCB")
 
 ## Phương Thức: history()
 
-Lấy dữ liệu giá lịch sử OHLCV.
+Lấy dữ liệu giá lịch sử OHLCV. Hỗ trợ tự động chuyển đổi mã phái sinh cũ (VN30F1M) sang mã mới (41I1G2000) và hỗ trợ các mã Index phổ biến.
 
 **Cú Pháp**
 ```python
@@ -66,20 +70,27 @@ df = quote.history(
     end="2024-12-31", 
     interval="1D"
 )
+
+# Hoặc sử dụng length (tiện lợi hơn)
+df = quote.history(length=90, interval='1D')
+
 ```
 
 **Tham Số**
 
 | Tham Số | Kiểu | Mặc Định | Mô Tả |
 |---|---|---|---|
-| `start` | str | - | Ngày bắt đầu, định dạng `YYYY-MM-DD` |
-| `end` | str | - | Ngày kết thúc, định dạng `YYYY-MM-DD` |
+| `start` | str | - | Ngày bắt đầu, định dạng `YYYY-MM-DD` (không bắt buộc nếu dùng `length`) |
+| `end` | str | - | Ngày kết thúc, định dạng `YYYY-MM-DD` (mặc định là hôm nay nếu không nhập) |
+| `length` | int | - | Số lượng nến/phiên dữ liệu gần nhất cần lấy (Ví dụ: `90`, `365`). Ưu tiên hơn `start` nếu được cung cấp. |
 | `interval` | str | `"1D"` | Khung thời gian: `1m`, `5m`, `15m`, `30m`, `1H`, `1W`, `1M` |
 
 **Interval Giới Hạn**
 
-- Khung phút (`1m`...`30m`): Max 2 năm
-- Khung ngày trở lên (`1D`...`1M`): dữ liệu đầy đủ kể từ 27/8/2000 với các mã REE, SAM
+- Khung phút (`1m`...`30m`): Max 2 năm. **Lưu ý**: Các mã Index (VNINDEX, HNXINDEX,...) hiện chưa hỗ trợ dữ liệu intraday (phút).
+- Khung ngày trở lên (`1D`...`1M`): dữ liệu đầy đủ kể từ 27/8/2000 với các mã REE, SAM.
+- **Hỗ trợ Index**: HNXINDEX, UPCOMINDEX, VN30, VN100, HNX30 (chỉ khung ngày).
+- **Hỗ trợ Phái sinh**: Tự động nhận diện và chuyển đổi mã hợp đồng tương lai sang kiểu mới để gọi hàm (Ví dụ: `VN30F1M` -> `41I1G2000`).
 
 **Kiểu Dữ Liệu Trả Về**
 
@@ -101,8 +112,11 @@ import pandas as pd
 
 quote = Quote(source="vci", symbol="VCB")
 
-# Lấy dữ liệu 1 năm theo ngày
-df = quote.history(start="2024-01-01", end="2024-12-31", interval="1D")
+# Lấy dữ liệu 1 năm theo ngày (dùng length cho tiện)
+df = quote.history(length=365, interval="1D") 
+# Hoặc dùng start/end
+# df = quote.history(start="2024-01-01", end="2024-12-31", interval="1D")
+
 print(f"Lấy được {len(df)} dòng dữ liệu")
 print(df.head())
 #            time   open   high    low  close     volume
@@ -216,13 +230,32 @@ balance_pct = (total_buy - total_sell) / (total_buy + total_sell)
 print(f"Balance %: {balance_pct*100:.2f}%")
 ```
 
+## Phương Thức: convert_derivative_symbol()
+
+Hàm tiện ích giúp chuyển đổi mã hợp đồng tương lai kiểu cũ (dễ nhớ) sang kiểu mới (chuẩn KRX/hệ thống mới).
+
+**Cú Pháp**
+```python
+new_qty = vnstock_data.convert_derivative_symbol(symbol='VN30F1M')
+```
+
+**Ví dụ**
+```python
+from vnstock_data import convert_derivative_symbol
+
+# Chuyển đổi mã phái sinh tháng hiện tại
+symbol = convert_derivative_symbol('VN30F1M')
+print(symbol) 
+# Output: '41I1G2000' (tại thời điểm tháng 1/2026)
+```
+
 ## Ma Trận Nguồn Dữ Liệu Hỗ Trợ
 
-| Phương Thức | VCI | VND | MAS |
-|---|---|---|---|
-| history | ✅ | ✅ | ✅ |
-| intraday | ✅ | ✅ | ✅ |
-| price_depth | ✅ | ❌ | ✅ |
+| Phương Thức | VCI | KBS | VND | MAS |
+|---|---|---|---|---|
+| history | ✅ | ✅ | ✅ | ✅ |
+| intraday | ✅ | ✅ | ✅ | ✅ |
+| price_depth | ✅ | ✅ | ❌ | ✅ |
 
 ## Ví Dụ Thực Tế
 

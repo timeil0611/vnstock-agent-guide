@@ -6,8 +6,8 @@
 
 ### ✨ Tính Năng Chính
 
-- ✅ **Nhiều nguồn dữ liệu**: VCI, KBS, MSN (web scraping); FMP, XNO, DNSE (API bên ngoài)
-- ⚠️ **TCBS**: Đã deprecated từ v3.4.0, sẽ loại bỏ trong v3.5.0 (tháng 3/2026)
+- ✅ **Nhiều nguồn dữ liệu**: VCI, KBS, MSN (API công khai); FMP, DNSE (API chính thức)
+- ⚠️ **TCBS**: Ngưng cập nhật thêm từ v3.4.0, sẽ loại bỏ trong v3.5.0 (tháng 3/2026)
 - ✅ **API thống nhất**: Cùng interface cho tất cả nguồn
 - ✅ **Dữ liệu lịch sử & Real-time**: Giá, công ty, tài chính
 - ✅ **Dữ liệu công ty**: Hồ sơ, cổ đông, nhân viên quản lý
@@ -29,7 +29,6 @@
 | **[09-Screener API](09-screener-api.md)** | Công cụ lọc chứng khoán nâng cao | Nâng cao |
 | **[10-Connector Guide](10-connector-guide.md)** | Hướng dẫn API bên ngoài (FMP, XNO, DNSE) | Nâng cao |
 | **[11-Best Practices](11-best-practices.md)** | Mẹo tối ưu hóa, xử lý lỗi, security | Nâng cao |
-| **[12-Migration Guide](12-migration-guide.md)** | Hướng dẫn chuyển từ TCBS sang KBS/VCI | Quan trọng |
 
 ## 🚀 Bắt Đầu Nhanh
 
@@ -56,7 +55,6 @@ Tài liệu được chia thành 11 phần theo thứ tự từ cơ bản đến
 9. **[09-Screener API](09-screener-api.md)** - Lọc chứng khoán nâng cao
 10. **[10-Connector Guide](10-connector-guide.md)** - Sử dụng API bên ngoài
 11. **[11-Best Practices](11-best-practices.md)** - Tối ưu hóa và xử lý lỗi
-12. **[12-Migration Guide](12-migration-guide.md)** - Chuyển đổi từ TCBS sang KBS/VCI
 
 ## Kiến Trúc Hệ Thống
 
@@ -80,7 +78,6 @@ Các Nguồn Dữ Liệu (Web Scraping & API bên ngoài)
 |-------|----------|-----|--------|----------|-----------|
 | **VCI** | ✅ | ✅ | ✅ | ✅ | Hoạt động |
 | **KBS** | ✅ | ✅ | ✅ | ✅ | Mới (v3.4.0) |
-| **TCBS** | ✅ | ✅ | ✅ | ✅ | ⚠️ Deprecated |
 | **MSN** | ✅ | ✅ | ❌ | ❌ | Hoạt động |
 
 ### API Bên Ngoài
@@ -118,5 +115,5 @@ Khuyến nghị làm theo thứ tự từ trên xuống để hiểu toàn bộ 
 - **Phiên bản**: 3.4.0
 - **Cập nhật lần cuối**: 2024-12-17
 - **Trạng thái**: Đang bảo trì ✅
-- **Thông báo**: TCBS đã deprecated, sẽ loại bỏ trong v3.5.0 (tháng 3/2026)
+- **Thông báo**: TCBS đã ngưng được cập nhật, sẽ loại bỏ trong v3.5.0 (tháng 3/2026)
 - **License**: MIT

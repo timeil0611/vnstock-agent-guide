@@ -35,19 +35,19 @@
 - **Lọc & Phân loại**: Tìm kiếm theo ngành, sàn giao dịch, chỉ số
 - **Xử lý lỗi thông minh**: Retry tự động với exponential backoff
 
-⚠️ **TCBS**: Đã deprecated từ v3.4.0, sẽ loại bỏ trong v3.5.0 (tháng 3/2026)
+⚠️ **TCBS**: Đã ngưng cập nhật từ v3.4.0, sẽ loại bỏ trong v3.5.0 (tháng 3/2026)
 
 ---
 
-## 💳 Các Plan & Rate Limit
+## 💳 So sánh các gói sử dụng & giới hạn
 
-Vnstock cung cấp các plan khác nhau phù hợp với từng use case:
+Vnstock cung cấp các gói sử dụng khác nhau phù hợp với từng nhu cầu cụ thể, xem thông tin chính xác được chia sẻ tại website Vnstock [Gói tài trợ Vnstock](https://vnstocks.com/insiders-program):
 
-### Plan Comparison
+### So sánh gói sử dụng
 
-| Tiêu Chí          | Guest | Free  | Bronze    | Silver    | Golden    |
+| Tiêu Chí          | Khách | Cộng đồng (Tiêu chuẩn)  | Bronze    | Silver    | Golden    |
 | ----------------- | ----- | ----- | --------- | --------- | --------- |
-| **Giới Hạn/Phút** | 20    | 60    | 180 (9x)  | 300 (15x) | 600 (30x) |
+| **Giới Hạn/Phút** | 20    | 60    | 180 (3x)  | 300 (5x) | 500 (10x) |
 | **Giới Hạn/Giờ**  | 1.2K  | 3.6K  | 10.8K     | 18K       | 36K       |
 | **Giới Hạn/Ngày** | 5K    | 10K   | 50K       | 100K      | 150K      |
 | **Đăng Nhập**     | ❌    | ✅    | ✅        | ✅        | ✅        |
@@ -60,7 +60,7 @@ Vnstock cung cấp các plan khác nhau phù hợp với từng use case:
 - Khi chạm giới hạn API, chương trình sẽ tự động dừng để bảo vệ hệ thống
 - Số lượng request trên mang tính tham khảo và có thể thay đổi
 - Giới hạn thực tế phụ thuộc vào: giới hạn của Vnstock và giới hạn của server nguồn dữ liệu
-- Khuyến nghị: Sử dụng batch requests và cache dữ liệu để tối ưu hiệu suất
+- Khuyến nghị: Sử dụng cache dữ liệu để tối ưu hiệu suất
 
 ### 🎯 Chọn Plan Nào?
 
@@ -70,7 +70,7 @@ Vnstock cung cấp các plan khác nhau phù hợp với từng use case:
 - **Đặc điểm**: 
     - Không cần đăng nhập hay API key
     - Giới hạn 20 request/phút (1.2K/giờ, 5K/ngày)
-    - Thích hợp cho quick test & exploration
+    - Thích hợp cho khám phá nhanh
 - **Ví dụ**: `quote = Quote(source="vci", symbol="VCB")`
 
 #### 2. **Free** - Học Tập & Phát Triển
@@ -79,7 +79,7 @@ Vnstock cung cấp các plan khác nhau phù hợp với từng use case:
 - **Đặc điểm**:
     - Cần đăng nhập tài khoản vnstock & API key
     - Giới hạn 60 request/phút (3.6K/giờ, 10K/ngày) - **3x Guest**
-    - Đủ cho phát triển & testing
+    - Đủ cho phát triển & kiểm thử cơ bản
 - **Cách bắt đầu**: Đăng ký miễn phí tại https://vnstocks.com/login
 - **Ví dụ**: 
 
@@ -483,14 +483,14 @@ usd_vnd = fx.get_rate("USD", "VND")
 | **KBS**     | kbsec.com.vn | Quote, Listing, Company, Finance, Trading | Web Scraping | ✅ Mới (v3.4.0) |
 | **MSN**     | msn.com      | Quote, Listing                            | Web Scraping | ✅ Hoạt động    |
 | **FMarket** | fmarket.vn   | Listing (Fund)                            | Web Scraping | ✅ Hoạt động    |
-| **TCBS**    | tcbs.com.vn  | Quote, Listing, Company, Finance, Trading | Web Scraping | ⚠️ Deprecated  |
+| **TCBS**    | tcbs.com.vn  | Quote, Listing, Company, Finance, Trading | Web Scraping | ⚠️ Ngưng hỗ trợ  |
 
 ### Connector (Official APIs)
 
 | API         | Domain                    | Đặc Điểm                   | Chi Phí  | Trạng Thái   |
 | ----------- | ------------------------- | -------------------------- | -------- | ------------ |
 | **FMP**     | financialmodelingprep.com | Dữ liệu tài chính toàn cầu | Freemium | ✅ Hoạt động |
-| **DNSE**    | dnse.vn                   | Dữ liệu trao đổi ghi danh  | Có phí   | ✅ Hoạt động |
+| **DNSE**    | dnse.vn                   | API giao dịch  | Miễn phí   | ✅ Hoạt động |
 | **Binance** | binance.com               | Dữ liệu crypto             | Miễn phí | 📋 Sắp tới  |
 
 ---
@@ -521,100 +521,6 @@ Vnstock cung cấp các utilities hỗ trợ:
 ### Validation & Auth
 
 - `validation.py` - Kiểm tra dữ liệu
-
----
-
-## 📊 Use Cases & Khuyến Nghị Plan
-
-### Scenario 1: Thử Nghiệm Nhanh (Quick Prototype)
-
-```python
-# Guest Plan - Không cần setup
-from vnstock import Quote
-
-quote = Quote(source="vci", symbol="VCB")
-df = quote.history(start="2024-01-01", end="2024-12-31")
-```
-
-- **Plan**: Guest (20 req/phút)
-- **Thích hợp**: Prototype, learning, quick test
-- **Giới hạn**: 5K request/ngày
-
----
-
-### Scenario 2: Phát Triển & Learning
-
-```python
-# Free Plan - Cần API key
-from vnstock import config, Quote
-
-config.set_api_key("your_api_key")
-quote = Quote(source="vci", symbol="VCB")
-
-# Có thể chạy nhiều queries hơn
-for symbol in ["VCB", "VNM", "ACB"]:
-    df = quote.history(symbol=symbol, start="2024-01-01", end="2024-12-31")
-```
-
-- **Plan**: Free (60 req/phút - 3x Guest)
-- **Thích hợp**: Sinh viên, developer, learning
-- **Giới hạn**: 10K request/ngày
-- **Cách bắt đầu**: https://vnstocks.com/login
-
----
-
-### Scenario 3: Dự Án Thương Mại (Production)
-
-```python
-# Bronze Plan - Dữ liệu nâng cao
-from vnstock_data import Quote, Finance
-
-quote = Quote(source="vci", symbol="VCB")
-finance = Finance(source="vci", symbol="VCB")
-
-# Lấy dữ liệu chi tiết từ vnstock_data
-df = quote.history(start="2024-01-01", end="2024-12-31")
-income = finance.income_statement(period="year")
-```
-
-- **Plan**: Bronze (180 req/phút - 9x Guest)
-- **Thích hợp**: Nhà phân tích, trader, startup
-- **Giới hạn**: 50K request/ngày
-- **Tính năng**: Truy cập vnstock_data, hỗ trợ cơ bản
-- **Tham gia**: https://vnstocks.com/insiders-program
-- **Xem thêm**: [vnstock_data Overview](../vnstock-data/01-overview.md)
-
----
-
-### Scenario 4: Hệ Thống Lớn (Enterprise)
-
-```python
-# Silver/Golden Plan - Tất cả chức năng
-from vnstock_data import Quote, Finance, Macro, Insights
-
-# Dữ liệu thị trường
-quote = Quote(source="vci", symbol="VCB")
-df = quote.history(start="2024-01-01", end="2024-12-31")
-
-# Dữ liệu tài chính
-finance = Finance(source="vci", symbol="VCB")
-income = finance.income_statement(period="year")
-
-# Dữ liệu macro (Silver+)
-macro = Macro()
-gdp = macro.gdp()
-
-# Insights & Screening (Golden)
-insights = Insights()
-screener = insights.screener(criteria={...})
-```
-
-- **Plan**: Silver (300 req/phút - 15x Guest) hoặc Golden (600 req/phút - 30x Guest)
-- **Thích hợp**: Công ty, quỹ đầu tư, dự án lâu dài
-- **Giới hạn**: 100K-150K request/ngày
-- **Tính năng**: Tất cả chức năng, hỗ trợ ưu tiên
-- **Tham gia**: https://vnstocks.com/insiders-program
-- **Xem thêm**: [vnstock_data Overview](../vnstock-data/01-overview.md)
 
 ---
 
@@ -654,7 +560,7 @@ screener = insights.screener(criteria={...})
 ```
 - Báo cáo tài chính:
   ├─ Bảng cân đối kế toán (Balance Sheet)
-  ├─ Báo cáo thu nhập (Income Statement)
+  ├─ Báo cáo kết quản kinh doanh (Income Statement)
   ├─ Lưu chuyển tiền tệ (Cash Flow)
   └─ Chỉ số tài chính (Ratios)
 - Theo kỳ: Hàng quý (Quarter) hoặc hàng năm (Year)

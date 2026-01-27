@@ -10,13 +10,16 @@ from vnstock_data import Trading
 # VCI: Dữ liệu từ bảng giá giao dịch
 trading_vci = Trading(source="vci", symbol="VCB")
 
+# KBS: Dữ liệu tương đương VCI, dùng cho Cloud
+trading_kbs = Trading(source="kbs", symbol="VCB")
+
 # CafeF: Dữ liệu có thể không đầy đủ và ổn định, sử dụng làm nguồn bổ sung
 trading_cafef = Trading(source="cafef", symbol="VCB")
 ```
 
-**Lưu ý**: VCI và CafeF có một số method (phương thức) khác nhau.
+**Lưu ý**: VCI/KBS và CafeF có một số method (phương thức) khác nhau.
 
-## Phương Thức VCI
+## Phương Thức VCI & KBS
 
 ### price_board() - Bảng Giá Realtime
 
@@ -177,12 +180,23 @@ df = trading_vci.prop_trade(
 )
 ```
 
-**Trả về**: DataFrame với các cột giao dịch tự doanh
-- **Cột khối lượng**: `prop_buy_volume`, `prop_sell_volume`
-- **Cột giá trị**: `prop_buy_value`, `prop_sell_value`
-- **Cột khác**: `trading_date`
+****Thông Tin Các Cột Dữ Liệu**
 
-**Kiểu dữ liệu**: int64 (khối lượng, giá trị), datetime64 (`trading_date`)
+**1. Nguồn VCI**:
+| Cột | Kiểu | Mô Tả |
+|---|---|---|
+| `trading_date` | datetime64 | Ngày giao dịch |
+| `total_buy_trade_volume` | float64 | Tổng KL Tự doanh Mua |
+| `total_sell_trade_volume` | float64 | Tổng KL Tự doanh Bán |
+| `total_trade_net_volume` | float64 | Tổng KL Ròng |
+| `total_match_buy_trade_volume` | float64 | KL Mua (Khớp lệnh) |
+| `total_deal_buy_trade_volume` | float64 | KL Mua (Thoả thuận) |
+
+**2. Nguồn CafeF**:
+| Cột | Kiểu | Mô Tả |
+|---|---|---|
+| `prop_buy_volume`, `prop_buy_value` | int64 | KL & GT Mua |
+| `prop_sell_volume`, `prop_sell_value` | int64 | KL & GT Bán |
 
 **Ví dụ** (VCB, 3 ngày gần nhất):
 ```
@@ -204,14 +218,32 @@ Truy xuất dữ liệu giao dịch nội bộ (insider transactions) của mã 
 df = trading_vci.insider_deal(limit=100, lang='vi')
 ```
 
-**Trả về**: DataFrame với các cột giao dịch nội bộ
-- **Cột thông tin cá nhân**: `transaction_man` (người giao dịch), `position` (chức vụ)
-- **Cột khối lượng**: `real_buy_volume`, `real_sell_volume`, `buy_volume`, `sell_volume`
-- **Cột giá trị**: `real_buy_value`, `real_sell_value`, `buy_value`, `sell_value`
-- **Cột ngày tháng**: `start_date`, `end_date`, `public_date`
-- **Cột khác**: `relation_name` (mối quan hệ), `icb_name` (ngành)
+****Thông Tin Các Cột Dữ Liệu**
 
-**Kiểu dữ liệu**: int64 (khối lượng, giá trị), datetime64 (ngày tháng), object (tên người, chức vụ)
+**1. Nguồn VCI**:
+| Cột | Kiểu | Mô Tả |
+|---|---|---|
+| `transaction_man` | object | Tên người giao dịch |
+| `position` | object | Chức vụ |
+| `relation_name` | object | Mối quan hệ |
+| `icb_name` | object | Ngành |
+| `real_buy_volume`, `real_sell_volume` | int64 | KL mua/bán thực tế |
+| `real_buy_value`, `real_sell_value` | int64 | GT mua/bán thực tế |
+| `buy_volume`, `sell_volume` | int64 | KL mua/bán đăng ký |
+| `buy_value`, `sell_value` | int64 | GT mua/bán đăng ký |
+| `start_date`, `end_date` | datetime64 | Ngày bắt đầu/kết thúc giao dịch |
+| `public_date` | datetime64 | Ngày công bố thông tin |
+
+**2. Nguồn CafeF**:
+| Cột | Kiểu | Mô Tả |
+|---|---|---|
+| `time` | datetime | Ngày giao dịch (Index) |
+| `transaction_man` | object | Tên người giao dịch |
+| `position` | object | Chức vụ |
+| `relation_name` | object | Mối quan hệ |
+| `buy_volume`, `sell_volume` | int64 | KL mua/bán |
+| `buy_value`, `sell_value` | int64 | GT mua/bán |
+| `start_date`, `end_date` | datetime | Ngày bắt đầu/kết thúc giao dịch |
 
 **Ví dụ** (VCB, 3 giao dịch gần nhất):
 ```
@@ -232,13 +264,26 @@ df = trading_cafef.price_history(
 )
 ```
 
-**Trả về**: DataFrame với 10 cột (shape: N, 10)
-- Cột giá: `open`, `high`, `low`, `close`, `adjusted_price`
-- Cột khối lượng: `matched_volume`, `deal_volume`
-- Cột giá trị: `matched_value`, `deal_value`
-- Cột khác: `change_pct` (% thay đổi giá)
-- Kiểu dữ liệu: float64 (giá, %), int64 (khối lượng, giá trị)
-- Index: `time` (datetime)
+****Thông Tin Các Cột Dữ Liệu**
+
+**1. Nguồn VCI**:
+| Cột | Kiểu | Mô Tả |
+|---|---|---|
+| `trading_date` | datetime64 | Ngày giao dịch |
+| `open`, `high`, `low`, `close` | float64 | Giá OHLC |
+| `volume`, `value` | float64 | Khối lượng & Giá trị |
+| `total_buy_trade`, `total_sell_trade` | float64 | Tổng số lệnh mua/bán (Chỉ VCI có) |
+| `foreign_buy_volume_total`... | float64 | Các cột về giao dịch khối ngoại |
+
+**2. Nguồn CafeF**:
+| Cột | Kiểu | Mô Tả |
+|---|---|---|
+| `open`, `high`, `low`, `close` | float64 | Giá OHLC |
+| `adjusted_price` | float64 | Giá điều chỉnh |
+| `matched_volume`, `matched_value` | int64 | KL & Giá trị khớp lệnh |
+| `deal_volume`, `deal_value` | int64 | KL & Giá trị thoả thuận |
+| `change_pct` | float64 | % thay đổi giá |
+| Index: `time` | datetime | Ngày giao dịch |
 
 **Ví dụ** (3 ngày gần nhất VCB):
 ```
@@ -330,11 +375,17 @@ df = trading_cafef.order_stats(
 )
 ```
 
-**Trả về**: DataFrame với 7 cột (shape: N, 7)
-- Cột lệnh: `buy_orders`, `sell_orders` (số lệnh - int64)
-- Cột khối lượng: `buy_volume`, `sell_volume`, `volume_diff` (int64)
-- Cột trung bình: `avg_buy_order_volume`, `avg_sell_order_volume` (float64)
-- Index: `time` (datetime)
+****Thông Tin Các Cột Dữ Liệu (CafeF Only)**
+
+| Cột | Kiểu | Mô Tả |
+|---|---|---|
+| `buy_orders` | int64 | Số lệnh đặt mua |
+| `sell_orders` | int64 | Số lệnh đặt bán |
+| `buy_volume` | int64 | Tống khối lượng đặt mua |
+| `sell_volume` | int64 | Tổng khối lượng đặt bán |
+| `avg_buy_order_volume` | int64 | Trung bình KL/lệnh mua |
+| `avg_sell_order_volume` | int64 | Trung bình KL/lệnh bán |
+| Index: `time` | datetime | Ngày giao dịch |
 
 **Ví dụ** (3 ngày gần nhất VCB):
 ```
@@ -379,9 +430,9 @@ print(f"\nGiao dịch nội bộ:")
 print(insider[['transaction_man', 'real_buy_volume', 'real_sell_volume']])
 ```
 
-## So Sánh VCI vs CafeF
+## So Sánh VCI/KBS vs CafeF
 
-| Dữ Liệu | VCI | CafeF |
+| Dữ Liệu | VCI/KBS | CafeF |
 |---|:---:|:---:|
 | Giá lịch sử | ✅ | ✅ |
 | Bảng giá realtime | ✅ | ❌ |
@@ -413,15 +464,15 @@ print(foreign.nlargest(5, 'fr_net_volume')[
 
 ## Ma Trận Phương Thức Hỗ Trợ
 
-| Phương Thức | VCI | CafeF |
-|---|:---:|:---:|
-| price_board | ✅ (~70 cột) | ❌ |
-| price_history | ✅ (~36 cột, hỗ trợ 1D/1W/1M/1Q/1Y) | ✅ (10 cột) |
-| summary | ✅ (thống kê tóm tắt) | ❌ |
-| foreign_trade | ✅ (6 cột) | ✅ (8 cột) |
-| prop_trade | ✅ (4 cột) | ✅ (4 cột) |
-| insider_deal | ✅ (hỗ trợ VI/EN) | ⚠️ (hiếm) |
-| order_stats | ❌ | ✅ (7 cột) |
+| Phương Thức | VCI | KBS | CafeF |
+|---|:---:|:---:|:---:|
+| price_board | ✅ (~70 cột) | ✅ | ❌ |
+| price_history | ✅ (~36 cột, hỗ trợ 1D/1W/1M/1Q/1Y) | ✅ | ✅ (10 cột) |
+| summary | ✅ (thống kê tóm tắt) | ✅ | ❌ |
+| foreign_trade | ✅ (6 cột) | ✅ | ✅ (8 cột) |
+| prop_trade | ✅ (4 cột) | ✅ | ✅ (4 cột) |
+| insider_deal | ✅ (hỗ trợ VI/EN) | ✅ | ⚠️ (hiếm) |
+| order_stats | ❌ | ❌ | ✅ (7 cột) |
 
 ## Ví Dụ Sử Dụng Toàn Diện
 
@@ -576,17 +627,18 @@ print(f"Cột riêng CafeF: {len(set(cafef_history.columns) - common_cols)} cộ
 
 ## Ghi Chú Quan Trọng
 
-### Về Dữ Liệu VCI
+### Về Dữ Liệu VCI & KBS
 - **Realtime**: `price_board()` cung cấp dữ liệu bảng giá realtime với độ trễ tối thiểu
-- **Độ chính xác**: Dữ liệu từ VCI được cập nhật liên tục và có độ chính xác cao
+- **Độ chính xác**: Dữ liệu từ VCI/KBS được cập nhật liên tục và có độ chính xác cao
 - **Phạm vi thời gian**: Hỗ trợ lấy dữ liệu từ ngày (1D) đến năm (1Y)
 - **Nước ngoài**: Dữ liệu giao dịch nước ngoài được tích hợp trong `price_history()` khi `get_all=True`
-- **Tự doanh**: Dữ liệu tự doanh được cung cấp riêng biệt qua `prop_trade()`
-- **Nội bộ**: Dữ liệu giao dịch nội bộ có thể không đầy đủ cho tất cả mã chứng khoán
+- **Tự doanh**: Dữ liệu tự doanh được cung cấp riêng biệt qua `prop_trade()` - hiện tại chỉ có VCI cung cấp.
+- **Nội bộ**: Dữ liệu giao dịch nội bộ có thể không đầy đủ cho tất cả mã chứng khoán.
+- **Lưu ý**: Dùng KBS khi chạy trên môi trường Cloud (Colab, Kaggle) để tránh chặn IP.
 
 ### Về Dữ Liệu CafeF
 - **Bổ sung**: CafeF được sử dụng làm nguồn bổ sung khi VCI không có dữ liệu
-- **Ổn định**: Dữ liệu có thể không đầy đủ hoặc ổn định như VCI
+- **Ổn định**: Dữ liệu có thể không đầy đủ hoặc ổn định như VCI, đôi khi thiếu dữ liệu cho những ngày cụ thể.
 - **Nước ngoài**: Cung cấp thông tin chi tiết về phòng ngoại và sở hữu
 - **Tự doanh**: Dữ liệu tự doanh được cung cấp riêng biệt
 - **Nội bộ**: Dữ liệu giao dịch nội bộ hiếm khi có sẵn

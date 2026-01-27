@@ -50,7 +50,74 @@ Các gói thư viện vnstock_data được cài đặt **chung** thông qua ch�
 
 ## 🔍 Danh Sách API Nhanh
 
-Xem **[01-overview.md](01-overview.md#các-loại-dữ-liệu-chính)** để tìm danh sách các loại dữ liệu chính và các ví dụ sử dụng cơ bản. Để tìm API chi tiết cho từng module, vui lòng xem các file tương ứng (02-listing.md, 03-quote.md, v.v.)
+### Listing
+```python
+listing.all_symbols()
+listing.symbols_by_industries(industry="Ngân hàng")
+listing.symbols_by_exchange(exchange="HOSE")
+listing.symbols_by_group(group="VN30")
+```
+
+### Quote
+```python
+quote.history(start="2024-01-01", end="2024-12-31", interval="1D")
+quote.intraday()
+quote.price_depth()
+```
+
+### Company
+```python
+company.overview()
+company.shareholders()
+company.officers()
+company.subsidiaries()
+company.news()
+company.events()
+company.trading_stats()
+```
+
+### Finance
+```python
+fin.balance_sheet(lang="vi")
+fin.income_statement(lang="vi")
+fin.cash_flow(lang="vi")
+fin.ratio(lang="vi")
+fin.annual_plan(lang="vi")  # MAS only
+```
+
+### Trading
+```python
+trading.price_board(symbol_list=[...])
+trading.price_history(start="2024-01-01", end="2024-12-31")
+trading.foreign_trade(start="2024-01-01", end="2024-12-31")
+trading.prop_trade(start="2024-01-01", end="2024-12-31")
+trading.insider_deal()
+trading.order_stats(start="2024-01-01", end="2024-12-31")
+```
+
+### Market
+```python
+market.pe()
+market.pb()
+market.evaluation()
+```
+
+### Macro
+```python
+macro.gdp()
+macro.cpi()
+macro.exchange_rate()
+macro.fdi()
+macro.money_supply()
+```
+
+### Commodity
+```python
+commodity.gold_vn()
+commodity.oil_crude()
+commodity.steel_hrc()
+commodity.pork_north_vn()
+```
 
 ## ⚠️ Những Lỗi Phổ Biến Cần Tránh
 
@@ -103,7 +170,7 @@ else:
     df['MA20'] = df['close'].rolling(20).mean()
 ```
 
-> **Tìm hiểu thêm**: Xem **[13-best-practices.md](13-best-practices.md)** để biết chi tiết hơn về các patterns, optimization tips, và xử lý lỗi.
+> **Tìm hiểu thêm**: Xem **[13-best-practices.md](13-best-practices.md)** để biết chi tiết hơn về các mẫu, gợi ý, và xử lý lỗi.
 
 ## 📊 Use Cases Phổ Biến
 
@@ -134,14 +201,50 @@ else:
 
 ## 📝 Template Nhanh
 
-Xem **[13-best-practices.md](13-best-practices.md)** để tìm các templates sử dụng:
+### Template 1: Lấy Giá Lịch Sử
+```python
+from vnstock_data import Quote
 
-- **Template 1**: Lấy Giá Lịch Sử
-- **Template 2**: Lấy BCTC
-- **Template 3**: Screening
-- **Template 4**: Kinh Tế Vĩ Mô
+quote = Quote(source="vnd", symbol="VCB")
+df = quote.history(start="2024-01-01", end="2024-12-31", interval="1D")
+print(df[['time', 'close']].head())
+```
 
-Hoặc xem các file 02-listing.md, 03-quote.md, 05-finance.md, v.v. để tìm code examples cụ thể cho từng module.
+### Template 2: Lấy BCTC
+```python
+from vnstock_data import Finance
+
+fin = Finance(source="vci", symbol="VCB", period="year")
+df_bs = fin.balance_sheet(lang="vi")
+df_ic = fin.income_statement(lang="vi")
+df_cf = fin.cash_flow(lang="vi")
+```
+
+### Template 3: Screening
+```python
+from vnstock_data import Listing, Quote
+
+listing = Listing(source="vci")
+all_stocks = listing.all_symbols()
+hose = all_stocks[all_stocks['exchange'] == 'HOSE']
+
+# Lấy giá cho mỗi cổ phiếu
+for symbol in hose['symbol'].head(10):
+    quote = Quote(source="vnd", symbol=symbol)
+    df = quote.history(start="2024-11-01", end="2024-11-30")
+    price = df['close'].iloc[-1]
+    print(f"{symbol}: {price}")
+```
+
+### Template 4: Kinh Tế Vĩ Mô
+```python
+from vnstock_data import Macro
+
+macro = Macro(source="mbk")
+df_gdp = macro.gdp()
+df_cpi = macro.cpi()
+df_fdi = macro.fdi()
+```
 
 ## 📄 Lưu Ý Bản Quyền
 
@@ -153,4 +256,4 @@ Hoặc xem các file 02-listing.md, 03-quote.md, 05-finance.md, v.v. để tìm 
 
 **Version**: 1.0  
 **Cập nhật lần cuối**: December 2025  
-**Tương thích với**: vnstock_data >= 2.1.7
+**Tương thích với**: vnstock_data >= 2.3.0

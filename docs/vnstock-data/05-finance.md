@@ -7,6 +7,9 @@ Lớp `Finance` cung cấp dữ liệu báo cáo tài chính, chỉ số tài ch
 ```python
 from vnstock_data import Finance
 
+# KBS (mặc định, cấu trúc báo cáo chuẩn, dùng cho Cloud/Jupyter để tránh chặn IP)
+fin_kbs = Finance(source="kbs", symbol="VCB", period="year")
+
 # VCI (đơn giản, dễ phân tích)
 fin = Finance(source="vci", symbol="VCB", period="year")
 
@@ -15,11 +18,13 @@ fin_mas = Finance(source="mas", symbol="VCB", period="year")
 ```
 
 **Tham số**:
-- `source`: `"vci"` hoặc `"mas"`
+- `source`: `"kbs"`, `"vci"`, hoặc `"mas"`
 - `symbol`: Mã cổ phiếu
 - `period`: `"year"` (báo cáo năm) hoặc `"quarter"` (báo cáo quý)
 
-## Phương Thức VCI
+## Phương Thức VCI & KBS (Cấu trúc giống nhau)
+
+*Lưu ý: Nguồn KBS có các phương thức tương tự VCI tuy nhiên cấu các báo cáo được trình bày có tính phân cấp - tương thích với dạng báo cáo truyền thống, nguồn này được bổ sung để thay thế VCI khi chạy trên môi trường Cloud.*
 
 ### balance_sheet() - Bảng Cân Đối Kế Toán
 
@@ -30,10 +35,35 @@ df = fin.balance_sheet(lang="vi")
 **Tham số**:
 - `lang`: `'vi'` (Tiếng Việt) hoặc `'en'` (Tiếng Anh) - Mặc định là `'vi'`
 
-**Kiểu Dữ Liệu Trả Về**: DataFrame với 94 cột (shape: 43, 94)
-- Dòng: Giai đoạn báo cáo (2017-2025-Q3)
-- Cột: Tài sản, Nợ phải trả, Vốn chủ sở hữu với các chi tiết lẻ
-- Kiểu dữ liệu: float64 (số tiền), object (report_period, Mã CP)
+**Thông Tin Cấu Trúc Dữ Liệu (Quan Trọng)**
+Cấu trúc dữ liệu trả về khác nhau tuỳ thuộc vào nguồn dữ liệu (`source`).
+
+**1. Nguồn VCI (Dạng Wide)**
+- Dữ liệu được trải phẳng, mỗi dòng là một kỳ báo cáo.
+- **Cột**: `report_period`, `ticker` và các khoản mục tài chính (ví dụ: `Total Assets`, `Owner's Equity`).
+- **Thích hợp**: Phân tích theo chuỗi thời gian (time-series) cho một mã.
+
+| Cột (Column) | Kiểu Dữ Liệu | Mô Tả |
+|---|---|---|
+| `ticker` | object | Mã cổ phiếu |
+| `report_period` | object | Kỳ báo cáo |
+| `Cash and precious metals` | float64 | Tiền và kim loại quý |
+| `TOTAL ASSETS` | float64 | Tổng tài sản |
+| `OWNER'S EQUITY` | float64 | Vốn chủ sở hữu |
+| ... | ... | (Hàng trăm cột khoản mục khác) |
+
+**2. Nguồn KBS/MAS (Dạng Report)**
+- Dữ liệu trình bày giống báo cáo tài chính truyền thống.
+- **Cột**: `item` (tên khoản mục), `item_id` (mã khoản mục), và các cột năm/quý (ví dụ `2024`, `2023`).
+- **Thích hợp**: Xem chi tiết báo cáo tại một thời điểm hoặc so sánh nhanh các năm.
+
+| Cột (Column) | Kiểu Dữ Liệu | Mô Tả |
+|---|---|---|
+| `item` | object | Tên khoản mục (ví dụ: "Tổng tài sản") |
+| `item_id` | object | Mã định danh khoản mục |
+| `2024` | float64 | Giá trị năm 2024 |
+| `2023` | float64 | Giá trị năm 2023 |
+| ... | ... | Các năm quá khứ khác |
 
 ### income_statement() - Báo Cáo Kết Quả Kinh Doanh
 
@@ -41,10 +71,22 @@ df = fin.balance_sheet(lang="vi")
 df = fin.income_statement(lang="vi")
 ```
 
-**Kiểu Dữ Liệu Trả Về**: DataFrame với 28 cột (shape: 43, 28)
-- Doanh thu, chi phí, lợi nhuận chi tiết theo từng loại
-- Ví dụ cột: 'Thu nhập lãi thuần', 'Chi phí dịch vụ', 'Lãi/(lỗ) thuần từ hoạt động khác', etc.
-- Kiểu dữ liệu: float64 (số tiền), object (report_period, Mã CP)
+**Thông Tin Cấu Trúc Dữ Liệu**
+
+**1. Nguồn VCI**: Dạng Wide (Mỗi dòng là 1 kỳ)
+| Cột | Mô Tả |
+|---|---|
+| `ticker`, `report_period` | Thông tin chung |
+| `Total Operating Income` | Tổng thu nhập hoạt động |
+| `Net profit/(loss) after tax` | Lợi nhuận sau thuế |
+| `EPS basic (VND)` | EPS cơ bản |
+| ... | ... |
+
+**2. Nguồn KBS/MAS**: Dạng Report (Các năm là cột)
+| Cột | Mô Tả |
+|---|---|
+| `item` | Tên khoản mục (VD: "Lợi nhuận sau thuế") |
+| `2024`, `2023`, ... | Giá trị theo từng năm/quý |
 
 ### cash_flow() - Báo Cáo Lưu Chuyển Tiền Tệ
 
@@ -52,10 +94,22 @@ df = fin.income_statement(lang="vi")
 df = fin.cash_flow(lang="vi")
 ```
 
-**Kiểu Dữ Liệu Trả Về**: DataFrame với 56 cột (shape: 43, 56)
-- Dòng tiền từ hoạt động kinh doanh, đầu tư, tài chính
-- Chi tiết về các khoản tiền thu/chi
-- Kiểu dữ liệu: float64 (số tiền), object (report_period, Mã CP)
+**Thông Tin Cấu Trúc Dữ Liệu**
+
+**1. Nguồn VCI**:
+| Cột | Mô Tả |
+|---|---|
+| `ticker`, `report_period` | Thông tin chung |
+| `Net cash from operating activities` | Lưu chuyển tiền từ HĐKD |
+| `Net cash from investing activities` | Lưu chuyển tiền từ HĐĐT |
+| `Net cash from financing activities` | Lưu chuyển tiền từ HĐTC |
+| `Cash and cash equivalents at end` | Tiền & tương đương tiền cuối kỳ |
+
+**2. Nguồn KBS/MAS**:
+| Cột | Mô Tả |
+|---|---|
+| `item` | Tên khoản mục (VD: "Lưu chuyển tiền từ HĐKD") |
+| `2024`, `2023`, ... | Giá trị theo từng năm/quý |
 
 ### ratio() - Chỉ Số Tài Chính
 
@@ -63,13 +117,18 @@ df = fin.cash_flow(lang="vi")
 df = fin.ratio(lang="vi")
 ```
 
-**Kiểu Dữ Liệu Trả Về**: DataFrame với 58 cột (shape: 42, 58)
-- Chỉ số định giá: P/E, P/B, P/S, EV/EBITDA, etc.
-- Chỉ số sinh lợi: ROE, ROA, ROIC, Biên lợi nhuận, etc.
-- Chỉ số tăng trưởng: Tăng trưởng doanh thu, tăng trưởng cho vay, etc.
-- Chỉ số độc lập: LDR, Nợ xấu, CAR, CASA, etc.
-- Dòng: Quý (2017-Q1 to 2025-Q3)
-- Kiểu dữ liệu: float64 (chỉ số), int64, object
+**Thông Tin Cấu Trúc Dữ Liệu**
+
+**1. Nguồn VCI (Rất chi tiết)**:
+Trả về DataFrame ~40-50 chỉ số quan trọng đã tính toán sẵn.
+- **Định giá**: `P/E`, `P/B`, `P/S`, `EV/EBITDA`
+- **Hiệu quả**: `ROE (%)`, `ROA (%)`, `ROIC`
+- **Thanh khoản**: `Current Ratio`, `Quick Ratio`, `Cash Ratio`
+- **Biên lợi nhuận**: `Gross Margin (%)`, `Net Profit Margin (%)`
+- **Tăng trưởng**: `Loans Growth (%)`, `Deposit Growth (%)` (ngành bank)
+
+**2. Nguồn KBS/MAS**:
+Tương tự cấu trúc Report của KBS, với các chỉ số là dòng (`item`), các năm là cột.
 
 ### note() - Thuyết Minh BCTC Chi Tiết
 
@@ -215,7 +274,7 @@ fin = Finance(source="vci", symbol="VCB", period="year")
 ```
 
 **Tham số**:
-- `source`: `"vci"` (VCI) hoặc `"mas"` (MAS) - Mặc định là `"vci"`
+- `source`: `"vci"`, `"kbs"`, `"mas"` - Mặc định là `"kbs"`
 - `symbol`: Mã cổ phiếu (ví dụ: `"VCB"`)
 - `period`: `"year"` (năm) hoặc `"quarter"` (quý) - Mặc định là `"year"`
 
@@ -232,14 +291,14 @@ df = fin.balance_sheet(lang="vi")
 
 > Thông tin số dòng/cột chỉ mang tính chất tham khảo, có thể thay đổi theo mã cụ thể, thời gian, và đặc thù nhóm phân loại công ty.
 
-| Phương Thức | VCI | MAS | Ghi Chú |
-|---|:---:|:---:|---|
-| balance_sheet | ✅ (94 cột, 43 kỳ) | ✅ (79 cột, 13 năm) | MAS theo chuẩn NHNN |
-| income_statement | ✅ (28 cột, 43 kỳ) | ✅ (26 cột, 13 năm) | MAS theo chuẩn NHNN |
-| cash_flow | ✅ (56 cột, 43 kỳ) | ✅ (52 cột, 13 năm) | MAS theo chuẩn NHNN |
-| ratio | ✅ (58 cột, 42 kỳ) | ✅ (8 cột, 13 năm) | MAS chỉ có 6 chỉ số |
-| note | ✅ (307 cột, 43 kỳ) | ❌ NotImplemented | Chỉ VCI có |
-| annual_plan | ❌ | ✅ (3 cột, 6 năm) | MAS only |
+| Phương Thức | VCI | KBS | MAS | Ghi Chú |
+|---|:---:|:---:|:---:|---|
+| balance_sheet | ✅ (đa kỳ) | ✅ | ✅ (13 năm) | MAS theo chuẩn NHNN |
+| income_statement | ✅ (đa kỳ) | ✅ | ✅ (13 năm) | MAS theo chuẩn NHNN |
+| cash_flow | ✅ (đa kỳ) | ✅ | ✅ (13 năm) | MAS theo chuẩn NHNN |
+| ratio | ✅ (đa kỳ) | ✅ | ✅ (13 năm) | MAS chỉ có 6 chỉ số |
+| note | ✅ (đa kỳ) | ✅ | ❌ NotImplemented | Chỉ VCI/KBS có |
+| annual_plan | ❌ | ❌ | ✅ (6 năm) | MAS only |
 
 
 ## Ví Dụ Phân Tích
