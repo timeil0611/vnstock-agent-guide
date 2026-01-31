@@ -1,319 +1,314 @@
 # Company - Thông Tin Công Ty, Cổ Đông, Ban Lãnh Đạo
 
-Lớp `Company` cung cấp thông tin chi tiết về các công ty niêm yết tại thị trường chứng khoán Việt Nam.
+Lớp `Company` cung cấp thông tin chi tiết về các công ty niêm yết, bao gồm hồ sơ, cổ đông, ban lãnh đạo và các sự kiện liên quan.
+
+## Tổng Quan & So Sánh Nguồn Dữ Liệu
+
+Package hỗ trợ 2 nguồn dữ liệu: **VCI** (Vietcap) và **KBS** (KB Securities). Dưới đây là bảng so sánh khả năng hỗ trợ của từng nguồn:
+
+| Tính năng (Method) | VCI | KBS | Mô tả |
+| :--- | :---: | :---: | :--- |
+| **overview** | ✅ | ✅ | Thông tin hồ sơ doanh nghiệp. VCI chi tiết hơn về cơ cấu cổ đông. |
+| **shareholders** | ✅ | ✅ | Danh sách cổ đông lớn. |
+| **officers** | ✅ | ✅ | Ban lãnh đạo. VCI hỗ trợ lọc trạng thái (đương nhiệm/từ nhiệm). |
+| **subsidiaries** | ✅ | ✅ | Công ty con & liên kết. |
+| **news** | ✅ | ✅ | Tin tức liên quan. |
+| **events** | ✅ | ⚠️ | Sự kiện quyền (trả cổ tức, họp ĐHCĐ). KBS hiện tại trả về dữ liệu trống. |
+| **capital_history** | ❌ | ✅ | Lịch sử tăng vốn. **Chỉ có trên KBS**. |
+| **insider_trading** | ❌ | ⚠️ | Giao dịch nội bộ. **Chỉ có trên KBS** (tuy nhiên dữ liệu trả về tuỳ cổ phiếu, có thể trống nếu không có giao dịch nội bộ). |
+| **ratio_summary** | ✅ | ❌ | Tóm tắt tỷ số tài chính (P/E, ROE...). **Chỉ có trên VCI**. |
+| **trading_stats** | ✅ | ❌ | Thống kê giao dịch (NN mua/bán, Room). **Chỉ có trên VCI**. |
+
+**Khuyến nghị**:
+- Sử dụng **VCI** làm mặc định cho hầu hết nhu cầu phân tích cơ bản.
+- Sử dụng **KBS** khi cần lấy **Lịch sử vốn (Capital History)**.
+
+---
 
 ## Khởi Tạo
 
 ```python
 from vnstock_data import Company
 
-# Khởi tạo VCI (đơn giản, dễ phân tích)
-company = Company(source="vci", symbol="VCB")
+# Nguồn VCI
+company_vci = Company(source="VCI", symbol="TCB")
 
-# Khởi tạo KBS (tương tự VCI, dùng cho Cloud/Jupyter để tránh chặn IP)
-company_kbs = Company(source="kbs", symbol="VCB")
+# Nguồn KBS
+company_kbs = Company(source="KBS", symbol="TCB")
 ```
 
-**Lưu ý**: VCI và KBS hỗ trợ đầy đủ các phương thức.
+---
 
-## Phương Thức
+## 1. overview() - Thông Tin Tổng Quan
 
-### overview() - Thông Tin Tổng Quan
+### Nguồn VCI
 
 ```python
-df = company.overview()
+df = company_vci.overview()
 ```
-
-**Thông Tin Các Cột Dữ Liệu (DataFrame)**
-
-| Cột (Column) | Kiểu Dữ Liệu (Dtype) | Mô Tả |
-|---|---|---|
-| `symbol` | object | Mã cổ phiếu |
-| `id` | object | ID công ty |
-| `issue_share` | int64 | Số lượng cổ phiếu lưu hành |
-| `history` | object | Lịch sử hình thành & phát triển |
-| `company_profile` | object | Giới thiệu công ty |
-| `icb_name3` | object | Tên ngành cấp 3 (ICB) |
-| `icb_name2` | object | Tên ngành cấp 2 (ICB) |
-| `icb_name4` | object | Tên ngành cấp 4 (ICB) |
-| `financial_ratio_issue_share` | int64 | Số lượng CP dùng tính chỉ số tài chính |
-| `charter_capital` | int64 | Vốn điều lệ |
-
-### shareholders() - Cổ Đông Lớn
-
-```python
-df = company.shareholders()
-```
-
-**Thông Tin Các Cột Dữ Liệu (DataFrame)**
-
-| Cột (Column) | Kiểu Dữ Liệu (Dtype) | Mô Tả |
-|---|---|---|
-| `id` | object | ID cổ đông |
-| `share_holder` | object | Tên cổ đông |
-| `quantity` | int64 | Số lượng cổ phần sở hữu |
-| `share_own_percent` | float64 | Tỷ lệ sở hữu (ví dụ: 0.15 là 15%) |
-| `update_date` | object | Ngày cập nhật dữ liệu |
-
-**Ví dụ output** (3 cổ đông lớn VCB):
-```
-         share_holder    quantity  share_own_percent update_date
-0   Ngân Hàng Nhà Nước Việt Nam  6250338579             0.7480  2025-11-21
-1   Mizuho Bank Limited         1253366534             0.1500  2025-11-21
-2   Quỹ Đầu tư Chính phủ Singapore (GIC)    84503639             0.0101  2025-10-05
-```
-
-### officers() - Ban Lãnh Đạo
-
-```python
-df = company.officers(filter_by='working')
-```
-
-**Tham số**:
-- `filter_by`: `'working'` (đang làm), `'resigned'` (đã nghỉ), `'all'` - Mặc định là `'working'`
-
-**Thông Tin Các Cột Dữ Liệu (DataFrame)**
-
-| Cột (Column) | Kiểu Dữ Liệu (Dtype) | Mô Tả |
-|---|---|---|
-| `id` | object | ID nhân sự |
-| `officer_name` | object | Tên nhân sự |
-| `officer_position` | object | Chức vụ đầy đủ |
-| `position_short_name` | object | Chức vụ viết tắt |
-| `update_date` | object | Ngày cập nhật |
-| `officer_own_percent` | float64 | Tỷ lệ sở hữu cổ phần |
-| `quantity` | int64 | Số lượng cổ phần sở hữu |
-
-**Ví dụ output** (3 người quản lý VCB):
-```
-    officer_name                     officer_position update_date  officer_own_percent  quantity
-0   Phùng Nguyễn Hải Yến   Phụ trách CBTT/Phó TGĐ  2025-07-30             0.000005     42339
-1   Nguyễn Thanh Tùng      Phó Tổng Giám đốc     2025-10-03             0.000003     22324
-2   Đào Minh Tuấn           Phó Tổng Giám đốc     2015-09-14             0.000002      5810
-```
-
-### subsidiaries() - Công Ty Con
-
-```python
-df = company.subsidiaries()
-```
-
-**Thông Tin Các Cột Dữ Liệu (DataFrame)**
-
-| Cột (Column) | Kiểu Dữ Liệu (Dtype) | Mô Tả |
-|---|---|---|
-| `id` | object | ID công ty con |
-| `sub_organ_code` | object | Mã tổ chức liên quan |
-| `ownership_percent` | float64 | Tỷ lệ sở hữu |
-| `organ_name` | object | Tên công ty con/liên kết |
-| `type` | object | Loại hình ('công ty con', 'công ty liên kết') |
-
-**Ví dụ output** (3 công ty con của VCB):
-```
-    sub_organ_code  ownership_percent                                     organ_name        type
-0       2646966              0.875    Công ty Chuyển tiền Vietcombank      công ty con
-1       TB                 1.000    Ngân hàng Thương mại TNHH MTV...     công ty con
-2       VCB198             0.700    Công ty TNHH Cao Ốc Vietcombank 198  công ty con
-```
-
-### events() - Sự Kiện Công Ty
-
-```python
-df = company.events()
-```
-
-**Thông Tin Các Cột Dữ Liệu (DataFrame)**
-
-| Cột (Column) | Kiểu Dữ Liệu (Dtype) | Mô Tả |
-|---|---|---|
-| `id` | object | ID sự kiện |
-| `event_title` | object | Tiêu đề sự kiện (Tiếng Việt) |
-| `en__event_title` | object | Tiêu đề sự kiện (English) |
-| `public_date` | object | Ngày công bố |
-| `issue_date` | object | Ngày thực hiện/thanh toán |
-| `source_url` | object | Link nguồn tin |
-| `event_list_code` | object | Mã loại sự kiện |
-| `ratio` | float64 | Tỷ lệ thực hiện (nếu có) |
-| `value` | float64 | Giá trị (tiền/cổ phiếu) |
-| `record_date` | object | Ngày đăng ký cuối cùng |
-| `exright_date` | object | Ngày giao dịch không hưởng quyền |
-| `event_list_name` | object | Tên loại sự kiện |
-| `en__event_list_name` | object | Tên loại sự kiện (English) |
-
-### news() - Tin Tức
-
-```python
-df = company.news()
-```
-
-**Thông Tin Các Cột Dữ Liệu (DataFrame)**
-
-| Cột (Column) | Kiểu Dữ Liệu (Dtype) | Mô Tả |
-|---|---|---|
-| `id` | object | ID tin tức |
-| `news_title` | object | Tiêu đề tin |
-| `news_sub_title` | object | Phụ đề |
-| `friendly_sub_title` | object | Tiêu đề thân thiện URL |
-| `news_image_url` | object | URL ảnh minh họa |
-| `news_source_link` | object | Link gốc |
-| `created_at` | object | Thời gian tạo |
-| `public_date` | int64 | Thời gian công bố (timestamp) |
-| `updated_at` | object | Thời gian cập nhật |
-| `lang_code` | object | Ngôn ngữ ('vi', 'en') |
-| `news_id` | object | Mã tin |
-| `news_short_content` | object | Tóm tắt nội dung |
-| `news_full_content` | object | Nội dung đầy đủ (HTML) |
-| `close_price` | int64 | Giá đóng cửa phiên liên quan |
-| `ref_price` | int64 | Giá tham chiếu |
-| `floor` | int64 | Giá sàn |
-| `ceiling` | int64 | Giá trần |
-| `price_change_pct` | float64 | % Thay đổi giá |
-
-### reports() - Báo Cáo Phân Tích
-
-```python
-df = company.reports()
-```
-
-**Thông Tin Các Cột Dữ Liệu (DataFrame)**
-
-| Cột (Column) | Kiểu Dữ Liệu (Dtype) | Mô Tả |
-|---|---|---|
-| `date` | object | Ngày báo cáo |
-| `description` | object | Mô tả chi tiết |
-| `link` | object | Link tải báo cáo (PDF) |
-| `name` | object | Tên báo cáo |
-
-### trading_stats() - Thống Kê Giao Dịch
-
-```python
-df = company.trading_stats()
-```
-
-**Thông Tin Các Cột Dữ Liệu (DataFrame)**
-
-| Cột (Column) | Kiểu Dữ Liệu (Dtype) | Mô Tả |
-|---|---|---|
-| `symbol` | object | Mã cổ phiếu |
-| `exchange` | object | Sàn giao dịch |
-| `ev` | int64 | Giá trị doanh nghiệp (Enterprise Value) |
-| `ceiling` | int64 | Giá trần |
-| `floor` | int64 | Giá sàn |
-| `ref_price` | int64 | Giá tham chiếu |
-| `open` | int64 | Giá mở cửa |
-| `match_price` | int64 | Giá khớp lệnh hiện tại |
-| `close_price` | int64 | Giá đóng cửa |
-| `price_change` | int64 | Thay đổi giá (số tuyệt đối) |
-| `price_change_pct` | float64 | % Thay đổi giá |
-| `high` | int64 | Giá cao nhất |
-| `low` | int64 | Giá thấp nhất |
-| `total_volume` | int64 | Tổng khối lượng giao dịch |
-| `high_price_1y` | int64 | Giá cao nhất 52 tuần |
-| `low_price_1y` | int64 | Giá thấp nhất 52 tuần |
-| `pct_low_change_1y` | float64 | % Thay đổi so với đáy 1 năm |
-| `pct_high_change_1y` | float64 | % Thay đổi so với đỉnh 1 năm |
-| `foreign_volume` | int64 | Khối lượng NN mua bán khớp lệnh |
-| `foreign_room` | int64 | Tổng Room NN |
-| `avg_match_volume_2w` | int64 | KLGD trung bình 2 tuần (10 phiên) |
-| `foreign_holding_room` | int64 | Room NN còn lại |
-| `current_holding_ratio` | float64 | Tỷ lệ sở hữu NN hiện tại |
-| `max_holding_ratio` | float64 | Tỷ lệ sở hữu NN tối đa |
-
-### ratio_summary() - Tóm Tắt Chỉ Số Tài Chính
-
-```python
-df = company.ratio_summary()
-```
-
-**Thông Tin Các Cột Dữ Liệu (DataFrame)**
-
-Một số chỉ số tài chính cơ bản và định giá quan trọng:
 
 | Cột (Column) | Kiểu Dữ Liệu | Mô Tả |
-|---|---|---|
-| `symbol` | object | Mã cổ phiếu |
-| `year_report` | int64 | Năm báo cáo gần nhất |
-| `length_report` | int64 | Số kỳ báo cáo |
-| `update_date` | int64 | Ngày cập nhật |
-| `revenue` | int64 | Doanh thu |
-| `revenue_growth` | float64 | Tăng trưởng doanh thu |
-| `net_profit` | int64 | Lợi nhuận ròng |
-| `net_profit_growth` | float64 | Tăng trưởng lợi nhuận |
-| `gross_margin` | int64 | Biên lợi nhuận gộp |
-| `net_profit_margin` | float64 | Biên lợi nhuận ròng |
-| `roe` | float64 | Return on Equity |
-| `roa` | float64 | Return on Assets |
-| `roic` | int64 | Return on Invested Capital |
-| `pe` | float64 | Price/Earnings |
-| `pb` | float64 | Price/Book |
-| `ps` | float64 | Price/Sales |
-| `pcf` | float64 | Price/Cash Flow |
-| `eps` | float64 | Earnings Per Share |
-| `eps_ttm` | float64 | EPS Trailing 12 months |
-| `current_ratio` | int64 | Tỷ số thanh khoản hiện hành |
-| `quick_ratio` | int64 | Tỷ số thanh khoản nhanh |
-| `cash_ratio` | int64 | Tỷ số thanh khoản tiền mặt |
-| `debt_equity (de)` | float64 | Nợ/Vốn chủ sở hữu |
-| `dividend` | int64 | Cổ tức |
-| `charter_capital` | int64 | Vốn điều lệ |
-| `issue_share` | int64 | Số lượng cổ phiếu |
-| ... | ... | (Tổng cộng ~45 cột) |
+| :--- | :--- | :--- |
+| `symbol` | string | Mã chứng khoán |
+| `id` | string | ID nội bộ |
+| `issue_share` | int | Số lượng cổ phiếu lưu hành |
+| `history` | string | Lịch sử hình thành và phát triển |
+| `company_profile` | string | Giới thiệu chung về công ty |
+| `icb_name3` | string | Ngành cấp 3 (ICB) |
+| `icb_name2` | string | Ngành cấp 2 (ICB) |
+| `icb_name4` | string | Ngành cấp 4 (ICB) |
+| `financial_ratio_issue_share` | int | SLCP dùng tính chỉ số tài chính |
+| `charter_capital` | int | Vốn điều lệ (VND) |
 
-*Ghi chú: Các cột `dtype=object` (ví dụ `interest_coverage`) có thể chứa giá trị NULL hoặc chuỗi.*
-
-## Ví Dụ
+### Nguồn KBS
 
 ```python
-from vnstock_data import Company
-import pandas as pd
-
-company = Company(source="vci", symbol="VCB")
-
-# Thông tin công ty
-overview = company.overview()
-print(f"Công ty: {overview['company_name'].values[0]}")
-print(f"Vốn điều lệ: {overview['charter_capital'].values[0]:,.0f}")
-
-# Cổ đông lớn
-shareholders = company.shareholders()
-print(f"\nTop 5 cổ đông lớn:")
-print(shareholders[['share_holder', 'share_own_percent']].head())
-
-# Ban lãnh đạo
-officers = company.officers(filter_by='working')
-print(f"\nBan lãnh đạo (đang làm):")
-print(officers[['officer_name', 'officer_position']].head())
-
-# Sự kiện gần đây
-events = company.events().head()
-print(f"\nSự kiện gần đây:")
-print(events[['event_title', 'public_date']])
-
-# Thống kê giao dịch
-stats = company.trading_stats()
-print(f"\nThống kê giao dịch:")
-print(f"Giá khớp: {stats['match_price'].values[0]}")
-print(f"Khối lượng: {stats['total_volume'].values[0]:,.0f}")
+df = company_kbs.overview()
 ```
 
-## Thực hành tốt
+| Cột (Column) | Kiểu Dữ Liệu | Mô Tả |
+| :--- | :--- | :--- |
+| `business_model` | string | Mô hình kinh doanh |
+| `symbol` | string | Mã chứng khoán |
+| `founded_date` | string | Ngày thành lập |
+| `charter_capital` | int | Vốn điều lệ |
+| `number_of_employees` | int | Số lượng nhân viên |
+| `listing_date` | string | Ngày niêm yết |
+| `exchange` | string | Sàn giao dịch |
+| `listing_price` | int | Giá chào sàn |
+| `listed_volume` | int | Khối lượng niêm yết lần đầu |
+| `ceo_name` | string | Tên CEO |
+| `ceo_position` | string | Chức vụ CEO |
+| `inspector_name` | string | Trưởng Ban Kiểm Soát |
+| `address` | string | Địa chỉ trụ sở |
+| `phone` | string | Số điện thoại |
+| `email` | string | Email liên hệ |
+| `website` | string | Website công ty |
+| `history` | string | Lịch sử công ty |
+| `outstanding_shares` | int | Số lượng cổ phiếu đang lưu hành |
 
-1. **Cache dữ liệu công ty**: Thông tin công ty ít thay đổi, hãy cache
-2. **Kết hợp với Quote**: Sử dụng Company + Quote để phân tích sâu hơn
-3. **Kiểm tra update_date**: Xác nhận dữ liệu có mới nhất không
+---
 
-## Ma Trận Support
+## 2. shareholders() - Cổ Đông Lớn
 
-| Phương Thức | VCI | KBS |
-|---|:---:|:---:|
-| overview | ✅ | ✅ |
-| shareholders | ✅ | ✅ |
-| officers | ✅ | ✅ |
-| subsidiaries | ✅ | ✅ |
-| events | ✅ | ✅ |
-| news | ✅ | ✅ |
-| reports | ✅ | ✅ |
-| trading_stats | ✅ | ✅ |
-| ratio_summary | ✅ | ✅ |
+### Nguồn VCI
 
-**Khuyến Nghị**: Luôn sử dụng VCI cho Company data.
+```python
+df = company_vci.shareholders()
+```
+
+| Cột (Column) | Kiểu Dữ Liệu | Mô Tả |
+| :--- | :--- | :--- |
+| `id` | string | ID cổ đông |
+| `share_holder` | string | Tên cổ đông |
+| `quantity` | int | Số lượng cổ phiếu nắm giữ |
+| `share_own_percent` | float | Tỷ lệ sở hữu (ví dụ 0.15 là 15%) |
+| `update_date` | string | Ngày cập nhật |
+
+### Nguồn KBS
+
+```python
+df = company_kbs.shareholders()
+```
+
+| Cột (Column) | Kiểu Dữ Liệu | Mô Tả |
+| :--- | :--- | :--- |
+| `name` | string | Tên cổ đông |
+| `update_date` | string | Ngày cập nhật |
+| `shares_owned` | int | Số lượng cổ phiếu |
+| `ownership_percentage` | float | Tỷ lệ sở hữu (%) |
+
+---
+
+## 3. officers() - Ban Lãnh Đạo
+
+### Nguồn VCI
+
+Dữ liệu chi tiết, bao gồm cả số lượng cổ phiếu sở hữu.
+
+```python
+# filter_by='working' (đương nhiệm), 'resigned' (đã nghỉ), 'all'
+df = company_vci.officers(filter_by='working')
+```
+
+| Cột (Column) | Kiểu Dữ Liệu | Mô Tả |
+| :--- | :--- | :--- |
+| `id` | string | ID lãnh đạo |
+| `officer_name` | string | Tên lãnh đạo |
+| `officer_position` | string | Chức vụ |
+| `position_short_name` | string | Chức vụ viết tắt |
+| `update_date` | string | Ngày cập nhật |
+| `officer_own_percent` | float | Tỷ lệ sở hữu cổ phần |
+| `quantity` | int | Số lượng cổ phần sở hữu |
+
+### Nguồn KBS
+
+Danh sách cơ bản.
+
+```python
+df = company_kbs.officers()
+```
+
+| Cột (Column) | Kiểu Dữ Liệu | Mô Tả |
+| :--- | :--- | :--- |
+| `from_date` | string | Năm bắt đầu/bổ nhiệm |
+| `position` | string | Chức vụ |
+| `name` | string | Tên lãnh đạo |
+| `position_en` | string | Chức vụ (Tiếng Anh) |
+| `owner_code` | string | Mã chức vụ |
+
+---
+
+## 4. subsidiaries() - Công Ty Con & Liên Kết
+
+### Nguồn VCI
+
+```python
+df = company_vci.subsidiaries()
+```
+
+| Cột (Column) | Kiểu Dữ Liệu | Mô Tả |
+| :--- | :--- | :--- |
+| `sub_organ_code` | string | Mã công ty con |
+| `organ_name` | string | Tên công ty con |
+| `ownership_percent` | float | Tỷ lệ sở hữu |
+| `type` | string | Loại hình ('công ty con' / 'liên kết') |
+
+### Nguồn KBS
+
+```python
+df = company_kbs.subsidiaries()
+```
+
+| Cột (Column) | Kiểu Dữ Liệu | Mô Tả |
+| :--- | :--- | :--- |
+| `name` | string | Tên công ty con |
+| `charter_capital` | int | Vốn điều lệ |
+| `ownership_percent` | float | Tỷ lệ sở hữu (%) |
+| `type` | string | Loại hình |
+
+---
+
+## 5. news() - Tin Tức
+
+### Nguồn VCI
+
+```python
+df = company_vci.news()
+```
+
+| Cột (Column) | Kiểu Dữ Liệu | Mô Tả |
+| :--- | :--- | :--- |
+| `news_title` | string | Tiêu đề tin |
+| `news_image_url` | string | Link ảnh minh họa |
+| `news_source_link` | string | Link nguồn bài viết |
+| `public_date` | int | Ngày công bố (timestamp) |
+| `news_short_content` | string | Tóm tắt |
+| `news_full_content` | string | Nội dung đầy đủ (HTML) |
+
+### Nguồn KBS
+
+```python
+df = company_kbs.news()
+```
+
+| Cột (Column) | Kiểu Dữ Liệu | Mô Tả |
+| :--- | :--- | :--- |
+| `title` | string | Tiêu đề tin |
+| `publish_time` | string | Thời gian công bố |
+| `url` | string | Đường dẫn chi tiết (relative path) |
+| `article_id` | int | ID bài viết |
+
+---
+
+## 6. events() - Sự Kiện Quyền
+
+### Nguồn VCI (Khuyên dùng)
+
+VCI cung cấp dữ liệu sự kiện chi tiết.
+
+```python
+df = company_vci.events()
+```
+
+| Cột (Column) | Kiểu Dữ Liệu | Mô Tả |
+| :--- | :--- | :--- |
+| `event_title` | string | Tên sự kiện |
+| `public_date` | string | Ngày công bố |
+| `exright_date` | string | Ngày giao dịch không hưởng quyền |
+| `record_date` | string | Ngày đăng ký cuối cùng |
+| `value` | int | Giá trị (cổ tức tiền mặt, v.v.) |
+| `ratio` | float | Tỷ lệ thực hiện |
+| `event_list_name` | string | Loại sự kiện |
+
+### Nguồn KBS
+
+> ⚠️ Hiện tại chưa ghi nhận dữ liệu sự kiện từ API KBS cho các mã VN30 phổ biến. API có thể trả về DataFrame rỗng.
+
+---
+
+## 7. capital_history() - Lịch Sử Tăng Vốn (Chỉ KBS)
+
+Chỉ hỗ trợ trên nguồn **KBS**.
+
+```python
+df = company_kbs.capital_history()
+```
+
+| Cột (Column) | Kiểu Dữ Liệu | Mô Tả |
+| :--- | :--- | :--- |
+| `date` | datetime | Ngày thay đổi |
+| `charter_capital` | int | Vốn điều lệ sau thay đổi |
+| `currency` | string | Đơn vị tiền tệ |
+
+---
+
+## 8. insider_trading() - Giao Dịch Nội Bộ (Chỉ KBS)
+
+Chỉ hỗ trợ trên nguồn **KBS**.
+
+> ⚠️ Hiện tại chưa ghi nhận dữ liệu từ API KBS cho các mã VN30 phổ biến.
+
+---
+
+## 9. ratio_summary() - Chỉ Số Tài Chính (Chỉ VCI)
+
+Chỉ hỗ trợ trên nguồn **VCI**. Cung cấp ảnh chụp nhanh các chỉ số quan trọng.
+
+```python
+df = company_vci.ratio_summary()
+```
+
+| Cột (Column) | Kiểu Dữ Liệu | Mô Tả |
+| :--- | :--- | :--- |
+| `pe` | float | P/E |
+| `pb` | float | P/B |
+| `roe` | float | ROE |
+| `roa` | float | ROA |
+| `eps` | float | EPS cơ bản |
+| `revenue_growth` | float | Tăng trưởng doanh thu |
+| `net_profit_growth` | float | Tăng trưởng lợi nhuận |
+| `dividend` | int | Cổ tức tiền mặt gần nhất |
+| `net_profit_margin` | float | Biên lợi nhuận ròng |
+| `debt_equity` | float | Tỷ số Nợ/Vốn chủ sở hữu (vắng mặt trong một số trường hợp, xem `de`) |
+
+---
+
+## 10. trading_stats() - Thống Kê Giao Dịch (Chỉ VCI)
+
+Chỉ hỗ trợ trên nguồn **VCI**.
+
+```python
+df = company_vci.trading_stats()
+```
+
+| Cột (Column) | Kiểu Dữ Liệu | Mô Tả |
+| :--- | :--- | :--- |
+| `open` | int | Giá mở cửa |
+| `high` | int | Giá cao nhất |
+| `low` | int | Giá thấp nhất |
+| `close_price` | int | Giá đóng cửa |
+| `total_volume` | int | Tổng khối lượng |
+| `foreign_volume` | int | Khối lượng nước ngoài |
+| `foreign_room` | int | Room nước ngoài |
+| `current_holding_ratio` | float | Tỷ lệ sở hữu nước ngoài |
