@@ -51,8 +51,8 @@ Kho lưu trữ này cung cấp file hướng dẫn chuyên biệt cho các nền
 ### Bước 1: Clone Repository
 
 ```bash
+# Clone repository vào thư mục dự án của bạn
 git clone https://github.com/vnstock-hq/vnstock-agent-guide.git
-cd vnstock-agent-guide
 ```
 
 - Nếu máy tính của bạn chưa có git, hãy tải về cài đặt [Git](https://git-scm.com/install/)
@@ -60,16 +60,16 @@ cd vnstock-agent-guide
 
 ### Bước 2: Copy Instruction Files
 
-Sau khi clone, sao chép các thư mục sau ra thư mục gốc của dự án để IDE hoặc AI nhận diện chính xác. Copy thủ công hoặc chạy lệnh dưới đây với macOS, Linux.
+Sau khi clone, sao chép các thư mục sau ra thư mục gốc của dự án để IDE hoặc AI nhận diện chính xác. Copy thủ công hoặc chạy lệnh dưới đây với macOS, Linux (Từ thư mục gốc dự án):
 
 ```bash
 # Copy các thư mục instruction ra thư mục gốc
-cp -r docs​ ./
-cp -r .agent ./
-cp -r .cursor ./
-cp AGENTS.md ./
-cp CLAUDE.md ./
-cp GEMINI.md ./
+cp -r vnstock-agent-guide/docs ./
+cp -r vnstock-agent-guide/.agent ./
+cp -r vnstock-agent-guide/.cursor ./
+cp vnstock-agent-guide/AGENTS.md ./
+cp vnstock-agent-guide/CLAUDE.md ./
+cp vnstock-agent-guide/GEMINI.md ./
 ```
 
 ### Bước 3: Sử Dụng Với AI Agents
