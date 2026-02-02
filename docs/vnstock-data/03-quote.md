@@ -1,53 +1,98 @@
-# Quote - Dữ Liệu Giá Lịch Sử, OHLCV, Intraday
 
-## Giới Thiệu
+# Quote API
 
-Lớp `Quote` cung cấp dữ liệu giá cổ phiếu theo thời gian:
+Module `quote` cung cấp các hàm chuyên biệt để truy xuất dữ liệu thị trường (market data) bao gồm: lịch sử giá OHLCV, dữ liệu khớp lệnh trong ngày (intraday), và độ sâu thị trường (price depth/order book).
 
-- **History**: Giá lịch sử OHLCV (Open, High, Low, Close, Volume) đã điều chỉnh theo ngày, tuần, tháng hoặc phút.
-- **Intraday**: Khớp lệnh chi tiết theo tất cả giao dịch phát sinh trong ngày. Dữ liệu chỉ có sẵn cho ngày giao dịch gần nhất.
-- **Price Depth**: Bước giá và khối lượng (dư mua, dư bán) tại các mức giá.
-- **Hỗ trợ Index**: Các chỉ số thị trường (VNINDEX, VN30,...) và tự động chuyển đổi mã phái sinh cũ sang mới.
+Hiện tại, module này hỗ trợ 4 nguồn dữ liệu chính thông qua cơ chế unified wrapper: `VCI`, `KBS`, `VND`, và `MAS`.
 
-### Ứng Dụng Phổ Biến
+## Khởi tạo
 
-- **Phân tích kỹ thuật - Technical Analysis**: Vẽ biểu đồ kỹ thuật, tính indicator
-- **Kiểm thử - Backtesting**: Kiểm tra chiến lược trên dữ liệu lịch sử
-- **Theo dõi thời gian thực - Realtime Monitoring**: Theo dõi giá intraday
-- **Phân tích thống kê - Statistical Analysis**: Tính volatility, correlation, etc.
-
-## Khởi Tạo Đối tượng
+Để sử dụng, bạn khởi tạo class `Quote` từ package `vnstock_data`. Class này sẽ tự động routing request đến implementation phù hợp dựa trên tham số `source`.
 
 ```python
 from vnstock_data import Quote
 
-# Cách 1: Qua Adapter (cú pháp dễ nhớ)
-quote = Quote(source="vci", symbol="VCB")
-
-# Cách 2: Qua Adapter với nguồn KBS (dùng cho Cloud)
-quote_kbs = Quote(source="kbs", symbol="VCB")
-
-# Cách 3: Qua Adapter với VND (cú pháp dễ nhớ)
-quote_vnd = Quote(source="vnd", symbol="VCB")
-
-# Cách 4: Import trực tiếp từ nguồn (cố định, phải hiểu cấu trúc thư **viện**)
-from vnstock_data.explorer.vci import Quote
-quote = Quote(symbol="VCB")
+# Khởi tạo quote adapter với nguồn dữ liệu VCI (mặc định KBS nếu không truyền source)
+quote = Quote(source='VCI')
 ```
 
-### Tham Số Khởi Tạo
+**Tham số khởi tạo:**
 
-- `source` (str): Nguồn dữ liệu (`"vci"`, `"kbs"`, `"vnd"`, `"mas"`)
-- `symbol` (str): Mã chứng khoán (ví dụ: `"VCB"`, `"VN30"`, `"VNINDEX"`). Mã có thể viết hoa hoặc thường.
+| Tham số | Kiểu dữ liệu | Mặc định | Mô tả |
+| :--- | :--- | :--- | :--- |
+| `source` | `str` | `'KBS'` | Mã nguồn dữ liệu. Hỗ trợ: `'VCI'`, `'KBS'`, `'VND'`, `'MAS'`. |
+| `symbol` | `str` | `""` | (Tùy chọn) Mã chứng khoán (cổ phiếu, chỉ số, hợp đồng tương lai, chứng quyền, ETF, trái phiếu, vv) mặc định cho các gọi hàm sau này. |
 
-### Các Mã Hỗ Trợ
+---
 
-**Cổ Phiếu**: Tất cả mã niêm yết tại HOSE, HNX, UPCOM (VD: `VCB`, `MSN`, `REE`)
+## 2. Lịch sử giá (History)
 
-**Chỉ Số**:
-- `VNINDEX` - VN Index
-- `HNXINDEX` - HNX Index
-- `UPCOMINDEX` - Upcom Index
+Truy xuất dữ liệu lịch sử giá (OHLCV) theo khung thời gian ngày. Dữ liệu này đã được điều chỉnh kỹ thuật (adjusted price) phù hợp để vẽ biểu đồ kỹ thuật.
+
+### Hàm: `history`
+
+```python
+def history(self, symbol=None, start=None, end=None, interval='1D', length=None)
+```
+
+**Tham số:**
+
+-   `symbol` (`str`): Mã chứng khoán hoặc mã chỉ số.
+    - **Hỗ trợ Index**: HNXINDEX, UPCOMINDEX, VN30, VN100, HNX30 (chỉ khung ngày).
+    - **Hỗ trợ Phái sinh**: Tự động nhận diện và chuyển đổi mã hợp đồng tương lai sang kiểu mới để gọi hàm (Ví dụ: `VN30F1M` -> `41I1G2000`).
+-   `start` (`str`): Ngày bắt đầu (định dạng `YYYY-mm-dd`). Bắt buộc nếu không có `length`.
+-   `end` (`str`): Ngày kết thúc (định dạng `YYYY-mm-dd`). Mặc định là ngày hiện tại.
+-   `length` (`str` | `int`): Khoảng thời gian lấy dữ liệu kể từ `end` ngược về quá khứ.
+    -   Ví dụ: `'1M'` (1 tháng), `'3M'` (3 tháng), `'1Y'` (1 năm), `'2W'` (2 tuần).
+    -   Nếu dùng `length`, `start` và `end` sẽ được tự động tính toán.
+-   `interval` (`str`): Khung thời gian.
+    -   `'1D'` (Daily): Hỗ trợ bởi tất cả các nguồn (`VCI`, `KBS`, `VND`, `MAS`).
+    -   `'1m'` (1 Minute): Hỗ trợ bởi tất cả các nguồn (dữ liệu ngắn hạn).
+    -   `'1H'` (Hourly): Ổn định nhất trên `VCI` và `MAS`.
+    -   Các khung khác tùy nguồn: `'5m'`, `'15m'`, `'30m'`.
+
+**Dữ liệu trả về (DataFrame):**
+
+Tất cả các nguồn dữ liệu đều được chuẩn hóa bao gồm: `time`, `open`, `high`, `low`, `close`, `volume`.
+
+### Ví dụ sử dụng
+
+```python
+from vnstock_data import Quote
+
+quote = Quote(source='VCI')
+
+# Cách 1: Sử dụng Start/End
+df = quote.history(symbol='TCB', start='2023-12-01', end='2023-12-05', interval='1D')
+
+# Cách 2: Sử dụng Length (tiện lợi)
+# Lấy dữ liệu 3 tháng gần nhất, khung 1 giờ
+df = quote.history(symbol='TCB', length='3M', interval='1H')
+
+print(df.tail())
+```
+
+**Kết quả mẫu:**
+
+```
+        time   open   high    low  close   volume
+0 2023-12-01  13.98  14.10  13.86  14.05  2696825
+1 2023-12-04  14.08  14.41  14.08  14.27  4762393
+2 2023-12-05  14.29  14.31  14.12  14.20  3094771
+```
+
+### Hỗ trợ chỉ số thị trường
+
+Ngoài mã cổ phiếu, bạn có thể truyền vào các mã chỉ số thị trường phổ biến. Các mã này được hỗ trợ trên tất cả các nguồn (`VCI`, `KBS`, `VND`, `MAS`):
+
+| Mã chỉ số | Mô tả |
+| :--- | :--- |
+| `VNINDEX` | Chỉ số VN-Index (HOSE) |
+| `VN30` | Chỉ số VN30 |
+| `HNX` | Chỉ số HNX-Index |
+| `UPCOM` | Chỉ số UPCoM-Index |
+
+Một số dạng chỉ số khác được hỗ trợ tuỳ nguồn ví dụ VND:
 - `VN30`, `VN100`, `HNX30`, `VNSML`, `VNMID`, `VNALL`
 
 **Chỉ Số Ngành**:
@@ -58,461 +103,113 @@ quote = Quote(symbol="VCB")
 - `VNFINSELECT`, `VNFIN` - Tài chính
 - `VNENE` - Năng lượng
 - `VNCONS`, `VNCOND` - Hàng tiêu dùng
+**Ví dụ lấy lịch sử VNINDEX:**
 
-## Phương Thức: history()
-
-Lấy dữ liệu giá lịch sử OHLCV. Hỗ trợ tự động chuyển đổi mã phái sinh cũ (VN30F1M) sang mã mới (41I1G2000) và hỗ trợ các mã Index phổ biến.
-
-**Cú Pháp**
 ```python
-df = quote.history(
-    start="2024-01-01", 
-    end="2024-12-31", 
-    interval="1D"
-)
-
-# Hoặc sử dụng length (tiện lợi hơn)
-df = quote.history(length=90, interval='1D')
-
+df_index = quote.history(symbol='VNINDEX', start='2023-01-01', end='2023-01-31')
 ```
 
-**Tham Số**
+---
 
-| Tham Số | Kiểu | Mặc Định | Mô Tả |
-|---|---|---|---|
-| `start` | str | - | Ngày bắt đầu, định dạng `YYYY-MM-DD` (không bắt buộc nếu dùng `length`) |
-| `end` | str | - | Ngày kết thúc, định dạng `YYYY-MM-DD` (mặc định là hôm nay nếu không nhập) |
-| `length` | int | - | Số lượng nến/phiên dữ liệu gần nhất cần lấy (Ví dụ: `90`, `365`). Ưu tiên hơn `start` nếu được cung cấp. |
-| `interval` | str | `"1D"` | Khung thời gian: `1m`, `5m`, `15m`, `30m`, `1H`, `1W`, `1M` |
+## 3. Khớp lệnh trong ngày (Intraday)
 
-**Interval Giới Hạn**
+Truy xuất danh sách các lệnh đã khớp (order matching) real-time hoặc lịch sử trong phiên của một mã chứng khoán.
 
-- Khung phút (`1m`...`30m`): Max 2 năm. **Lưu ý**: Các mã Index (VNINDEX, HNXINDEX,...) hiện chưa hỗ trợ dữ liệu intraday (phút).
-- Khung ngày trở lên (`1D`...`1M`): dữ liệu đầy đủ kể từ 27/8/2000 với các mã REE, SAM.
-- **Hỗ trợ Index**: HNXINDEX, UPCOMINDEX, VN30, VN100, HNX30 (chỉ khung ngày).
-- **Hỗ trợ Phái sinh**: Tự động nhận diện và chuyển đổi mã hợp đồng tương lai sang kiểu mới để gọi hàm (Ví dụ: `VN30F1M` -> `41I1G2000`).
+### Hàm: `intraday`
 
-**Kiểu Dữ Liệu Trả Về**
-
-```
-DataFrame với các cột:
-- time: Thời gian (datetime64)
-- open: Giá mở cửa (float)
-- high: Giá cao nhất (float)
-- low: Giá thấp nhất (float)
-- close: Giá đóng cửa (float)
-- volume: Khối lượng (int)
+```python
+def intraday(self, symbol=None, page_size=100)
 ```
 
-**Ví Dụ**
+**Tham số:**
+
+-   `symbol` (`str`): Mã chứng khoán.
+-   `page_size` (`int`): Số lượng bản ghi muốn lấy trong một lần gọi (paging).
+
+**Dữ liệu trả về:**
+
+Cấu trúc dữ liệu có sự khác biệt nhỏ giữa các nguồn:
+
+| Nguồn | Các cột trả về |
+| :--- | :--- |
+| **VCI / KBS** | `time`, `price`, `volume`, `match_type`, `id` |
+| **MAS** | `time`, `price`, `volume`, `match_type` (không có `id`) |
+| **VND** | *Hiện tại chưa đẩy đủ các method như KBS và VCI, MAS* |
+
+### Ví dụ sử dụng
 
 ```python
 from vnstock_data import Quote
-import pandas as pd
 
-quote = Quote(source="vci", symbol="VCB")
-
-# Lấy dữ liệu 1 năm theo ngày (dùng length cho tiện)
-df = quote.history(length=365, interval="1D") 
-# Hoặc dùng start/end
-# df = quote.history(start="2024-01-01", end="2024-12-31", interval="1D")
-
-print(f"Lấy được {len(df)} dòng dữ liệu")
+# Sử dụng nguồn VCI cho dữ liệu Intraday chi tiết
+quote = Quote(source='VCI')
+df = quote.intraday(symbol='TCB', page_size=10)
 print(df.head())
-#            time   open   high    low  close     volume
-# 0  2024-01-02  70.5  71.2  70.3  70.8  1200000
-# 1  2024-01-03  71.0  72.1  71.0  71.5  1500000
-
-# Lấy dữ liệu intraday (phút)
-df_intra = quote.history(start="2024-12-20", end="2024-12-20", interval="15m")
-
-# Tính moving average
-df['MA20'] = df['close'].rolling(20).mean()
-df['MA50'] = df['close'].rolling(50).mean()
-
-# Lấy close price gần nhất
-latest_price = df['close'].iloc[-1]
-print(f"Giá đóng cửa gần nhất: {latest_price}")
 ```
 
-## Phương Thức: intraday()
-
-Lấy dữ liệu khớp lệnh chi tiết trong ngày giao dịch gần nhất.
-
-**Cú Pháp**
-```python
-df = quote.intraday()
-```
-
-**Tham Số**: Không có
-
-**Kiểu Dữ Liệu Trả Về**
+**Kết quả mẫu (VCI Source):**
 
 ```
-DataFrame với các cột:
-- time: Thời gian khớp lệnh (datetime)
-- price: Giá khớp lệnh (float)
-- accumulated_val: Giá trị lũy tích (int)
-- accumulated_vol: Khối lượng lũy tích (int)
-- volume: Khối lượng giao dịch lần này (int)
-- match_type: Loại khớp lệnh (str) - "Sell", "Buy", "ATO", "ATC"
+                       time  price  volume match_type         id
+0 2024-01-30 14:29:19+07:00  35.25     200       Sell  429964787
+1 2024-01-30 14:29:23+07:00  35.25     100       Sell  429965133
+2 2024-01-30 14:29:23+07:00  35.25    1800       Sell  429965132
+3 2024-01-30 14:29:27+07:00  35.25     500        Buy  429965494
+4 2024-01-30 14:29:42+07:00  35.25    1000        Buy  429967143
 ```
 
-**Ví Dụ**
+---
+
+## 4. Độ sâu thị trường (Price Depth)
+
+Truy xuất thông tin độ sâu thị trường, bao gồm các mức giá đặt mua (bid) và đặt bán (ask) tốt nhất cùng khối lượng tương ứng.
+
+### Hàm: `price_depth`
 
 ```python
-quote = Quote(source="vci", symbol="VCB")
-
-# Lấy dữ liệu intraday hôm nay
-df_intra = quote.intraday()
-
-print(f"Số lệnh khớp hôm nay: {len(df_intra)}")
-print(df_intra.head(20))
-#                  time  price  accumulated_val accumulated_vol  volume match_type
-# 0 2024-12-20 09:15:00  70.5      1317470000          20300   20300        ATO
-
-# Lọc chỉ lệnh mua/bán
-buy_orders = df_intra[df_intra['match_type'] == 'Buy']
-sell_orders = df_intra[df_intra['match_type'] == 'Sell']
-
-# Tính matching price
-matching_price = df_intra['price'].iloc[-1]
-print(f"Giá khớp lệnh gần nhất: {matching_price}")
-
-# Tổng khối lượng giao dịch ngày hôm nay
-total_vol = df_intra['volume'].sum()
-print(f"Tổng khối lượng: {total_vol}")
+def price_depth(self, symbol=None)
 ```
 
-## Phương Thức: price_depth()
+**Tham số:**
 
-Lấy bước giá (mức giá, khối lượng mua/bán) tại thời điểm hiện tại.
+-   `symbol` (`str`): Mã chứng khoán.
 
-**Cú Pháp**
-```python
-df = quote.price_depth()
-```
+**Dữ liệu trả về (DataFrame):**
 
-**Kiểu Dữ Liệu Trả Về**
+| Nguồn | Các cột trả về |
+| :--- | :--- |
+| **VCI / MAS** | `price` (Giá), `volume` (Tổng KL), `buy_volume` (KL Mua), `sell_volume` (KL Bán), `undefined_volume` |
+| **KBS** | `price`, `buyVol` (KL Mua), `sellVol` (KL Bán), `unknownVol`, `totalVol` (Tổng KL) |
+| **VND** | *Chưa hỗ trợ* |
 
-```
-DataFrame với các cột:
-- price: Mức giá (float)
-- volume: Tổng khối lượng (float)
-- buy_volume: Khối lượng mua (float)
-- sell_volume: Khối lượng bán (float)
-- undefined_volume: Khối lượng chưa xác định (float)
-```
-
-**Ví Dụ**
-
-```python
-quote = Quote(source="vci", symbol="VCB")
-
-df_depth = quote.price_depth()
-
-print(df_depth.head(10))
-#     price    volume  buy_volume  sell_volume  undefined_volume
-# 0  62300.0    4900.0     4900.0         0.0              0.0
-# 1  62200.0   10700.0     7100.0      3600.0              0.0
-
-# Tính dư mua - dư bán
-df_depth['balance'] = df_depth['buy_volume'] - df_depth['sell_volume']
-
-# Lấy top bid/ask
-print(f"Bid cao nhất (dư mua): {df_depth.iloc[0]['price']}")
-print(f"Ask thấp nhất (dư bán): {df_depth.iloc[0]['price']}")
-
-# Tính sự chênh lệch dư mua/bán
-total_buy = df_depth['buy_volume'].sum()
-total_sell = df_depth['sell_volume'].sum()
-balance_pct = (total_buy - total_sell) / (total_buy + total_sell)
-print(f"Balance %: {balance_pct*100:.2f}%")
-```
-
-## Phương Thức: convert_derivative_symbol()
-
-Hàm tiện ích giúp chuyển đổi mã hợp đồng tương lai kiểu cũ (dễ nhớ) sang kiểu mới (chuẩn KRX/hệ thống mới).
-
-**Cú Pháp**
-```python
-new_qty = vnstock_data.convert_derivative_symbol(symbol='VN30F1M')
-```
-
-**Ví dụ**
-```python
-from vnstock_data import convert_derivative_symbol
-
-# Chuyển đổi mã phái sinh tháng hiện tại
-symbol = convert_derivative_symbol('VN30F1M')
-print(symbol) 
-# Output: '41I1G2000' (tại thời điểm tháng 1/2026)
-```
-
-## Ma Trận Nguồn Dữ Liệu Hỗ Trợ
-
-| Phương Thức | VCI | KBS | VND | MAS |
-|---|---|---|---|---|
-| history | ✅ | ✅ | ✅ | ✅ |
-| intraday | ✅ | ✅ | ✅ | ✅ |
-| price_depth | ✅ | ✅ | ❌ | ✅ |
-
-## Ví Dụ Thực Tế
-
-### Ví Dụ 1: Backtest Strategy Đơn Giản
-
-```python
-from vnstock_data import Quote
-import pandas as pd
-
-quote = Quote(source="vci", symbol="VCB")
-df = quote.history(start="2023-01-01", end="2024-12-31", interval="1D")
-df = df.set_index('time') # Đặt time làm index, tạo time series
-
-# Tính SMA20, SMA50
-df['SMA20'] = df['close'].rolling(20).mean()
-df['SMA50'] = df['close'].rolling(50).mean()
-
-# Tín hiệu: Golden Cross
-df['signal'] = 0
-df.loc[df['SMA20'] > df['SMA50'], 'signal'] = 1
-df.loc[df['SMA20'] <= df['SMA50'], 'signal'] = -1
-
-# Tính return
-df['returns'] = df['close'].pct_change()
-df['strategy_returns'] = df['signal'].shift(1) * df['returns']
-
-# Tính cumulative return
-df['cumulative_return'] = (1 + df['strategy_returns']).cumprod()
-
-print(f"Final return: {(df['cumulative_return'].iloc[-1] - 1) * 100:.2f}%")
-```
-
-### Ví Dụ 2: Tìm Support/Resistance
+### Ví dụ sử dụng
 
 ```python
 from vnstock_data import Quote
 
-quote = Quote(source="vci", symbol="VCB")
-df = quote.history(start="2024-01-01", end="2024-12-31", interval="1D")
-df = df.set_index('time')  # Đặt time làm index
-
-# Năm ngoài
-year_high = df['high'].max()
-year_low = df['low'].min()
-year_close = df['close'].iloc[-1]
-
-print(f"Năm ngoài cao nhất: {year_high}")
-print(f"Năm ngoài thấp nhất: {year_low}")
-print(f"Giá đóng cửa năm ngoài: {year_close}")
-print(f"Năm ngoài range: {year_high - year_low}")
-
-# Tính % từ low -> high
-pct_from_low = (year_close - year_low) / (year_high - year_low) * 100
-print(f"% từ low tới close: {pct_from_low:.2f}%")
+quote = Quote(source='VCI')
+df = quote.price_depth(symbol='TCB')
+print(df.head())
 ```
 
-### Ví Dụ 3: Tính Volatility
+**Kết quả mẫu (VCI Source):**
 
-```python
-from vnstock_data import Quote
-import numpy as np
-
-quote = Quote(source="vci", symbol="VCB")
-df = quote.history(start="2024-01-01", end="2024-12-31", interval="1D")
-df = df.set_index('time')  # Đặt time làm index
-
-# Tính daily return
-df['returns'] = df['close'].pct_change()
-
-# Tính volatility (annualized)
-daily_vol = df['returns'].std()
-annual_vol = daily_vol * np.sqrt(252)  # 252 trading days per year
-
-print(f"Daily volatility: {daily_vol*100:.2f}%")
-print(f"Annual volatility: {annual_vol*100:.2f}%")
-
-# Tính rolling volatility
-df['vol_20'] = df['returns'].rolling(20).std() * np.sqrt(252)
-print(df[['close', 'vol_20']].tail(10))
+```
+     price     volume  buy_volume  sell_volume  undefined_volume
+0  35900.0  3424400.0         0.0          0.0         3424400.0
+1  35300.0   328100.0    316900.0      11200.0               0.0
 ```
 
-### Ví Dụ 4: Phân Tích Intraday
+---
 
-```python
-from vnstock_data import Quote
-import pandas as pd
+## Tổng kết so sánh nguồn dữ liệu
 
-quote = Quote(source="vci", symbol="VCB")
-df_intra = quote.intraday()
+| Tính năng | VCI | KBS | VND | MAS |
+| :--- | :---: | :---: | :---: | :---: |
+| **Lịch sử giá (History)** | ✅ Ổn định | ✅ Ổn định | ✅ Ổn định | ✅ Ổn định |
+| **Intraday** | ✅ Chi tiết | ✅ Chi tiết | ⚠️ Chưa ổn định | ✅ Cơ bản |
+| **Price Depth** | ✅ Có | ✅ Có | ❌ Chưa có | ✅ Có |
+| **Chỉ số thị trường** | ✅ Có | ✅ Có | ✅ Có | ✅ Có |
 
-if not df_intra.empty:
-    # Giá mở cửa
-    opening_price = df_intra['price'].iloc[0]
-    
-    # Giá cao/thấp nhất trong ngày
-    high = df_intra['price'].max()
-    low = df_intra['price'].min()
-    
-    # Giá đóng cửa
-    closing_price = df_intra['price'].iloc[-1]
-    
-    # Tổng khối lượng
-    total_volume = df_intra['volume'].sum()
-    
-    print(f"Open: {opening_price}")
-    print(f"High: {high}")
-    print(f"Low: {low}")
-    print(f"Close: {closing_price}")
-    print(f"Volume: {total_volume}")
-    print(f"Change: {(closing_price - opening_price)/opening_price*100:.2f}%")
-```
-
-## Bí quyết & Thực hành tốt
-
-### Tip 1: Kiểm Tra Độ Đủ Dữ Liệu
-
-```python
-from vnstock_data import Quote
-import pandas as pd
-
-quote = Quote(source="vci", symbol="VCB")
-df = quote.history(start="2020-01-01", end="2024-12-31", interval="1D")
-
-# Kiểm tra số dòng
-print(f"Số ngày giao dịch: {len(df)}")
-
-# Kiểm tra missing data
-print(f"Missing values: {df.isnull().sum().sum()}")
-
-# Kiểm tra cột có đủ không
-required_cols = ['open', 'high', 'low', 'close', 'volume']
-missing_cols = [col for col in required_cols if col not in df.columns]
-if missing_cols:
-    print(f"Thiếu cột: {missing_cols}")
-```
-
-### Tip 2: Đặt Datetime Index Cho Phân Tích Timeseries
-
-```python
-from vnstock_data import Quote
-
-quote = Quote(source="vci", symbol="VCB")
-df = quote.history(start="2024-01-01", end="2024-12-31", interval="1D")
-
-# Đặt cột time làm index để tạo timeseries
-df = df.set_index('time')
-
-# Giờ có thể sử dụng các method timeseries
-print(df.index)  # DatetimeIndex
-
-# Lọc theo tháng
-df_2024_12 = df.loc['2024-12']
-print(f"Dữ liệu tháng 12/2024: {len(df_2024_12)} ngày")
-
-# Resample thành weekly
-df_weekly = df.resample('W').agg({
-    'open': 'first',
-    'high': 'max',
-    'low': 'min',
-    'close': 'last',
-    'volume': 'sum'
-})
-
-# Tính return hàng tuần
-df_weekly['weekly_return'] = df_weekly['close'].pct_change()
-
-print(df_weekly[['close', 'weekly_return']].tail())
-```
-
-**Lưu ý quan trọng**: Luôn đặt `time` làm index trước khi thực hiện các thao tác phân tích kỹ thuật như tính moving averages, resampling, hoặc các indicator phức tạp. Điều này giúp pandas hiểu đây là dữ liệu timeseries và thực hiện các phép toán chính xác.
-
-### Tip 3: Cache Dữ Liệu Để Tăng Tốc
-
-```python
-from vnstock_data import Quote
-import pickle
-
-quote = Quote(source="vci", symbol="VCB")
-
-# Lần đầu: lấy từ API
-df = quote.history(start="2024-01-01", end="2024-12-31", interval="1D")
-df.to_csv('vcb_2024.csv', index=False)
-
-# Lần tiếp theo: đọc từ file
-import pandas as pd
-df = pd.read_csv('vcb_2024.csv')
-df['time'] = pd.to_datetime(df['time'])
-```
-
-### Tip 4: So Sánh Nhiều Nguồn Dữ Liệu
-
-```python
-from vnstock_data import Quote
-import pandas as pd
-
-# Lấy từ VCI
-quote_vci = Quote(source="vci", symbol="VCB")
-df_vci = quote_vci.history(start="2024-12-01", end="2024-12-31", interval="1D")
-
-# Lấy từ VND
-quote_vnd = Quote(source="vnd", symbol="VCB")
-df_vnd = quote_vnd.history(start="2024-12-01", end="2024-12-31", interval="1D")
-
-# So sánh close price
-comparison = pd.DataFrame({
-    'VCI': df_vci.set_index('time')['close'],
-    'VND': df_vnd.set_index('time')['close']
-})
-
-print(comparison.head())
-
-# Tính hiệu giữa 2 nguồn
-comparison['diff_pct'] = abs(comparison['VCI'] - comparison['VND']) / comparison['VCI'] * 100
-print(f"Trung bình chênh lệch: {comparison['diff_pct'].mean():.2f}%")
-```
-
-## Sai Lầm Cần Tránh
-
-### 1: Quên Chuyển Đổi Ngày Sang Định Dạng ISO (YYYY-MM-DD)
-
-**Sai**:
-```python
-df = quote.history(start="01/01/2024", end="31/12/2024")  # Sai format!
-```
-
-**Đúng**:
-```python
-df = quote.history(start="2024-01-01", end="2024-12-31")  # YYYY-MM-DD
-```
-
-### 2: Kỳ Vọng Dữ Liệu Quá Dài ở Khung Thời Gian Phút
-
-**Sai**:
-```python
-# Yêu cầu 5 năm dữ liệu phút
-df = quote.history(start="2019-01-01", end="2024-12-31", interval="1m")
-```
-
-**Đúng**:
-```python
-# Max 2 năm cho interval phút
-df = quote.history(start="2022-01-01", end="2024-12-31", interval="1m")
-```
-
-### 3: Không Kiểm Tra Kết Quả Trống
-
-**Sai**:
-```python
-df = quote.history(start="2100-01-01", end="2100-12-31")  # Dữ liệu tương lai
-df['MA20'] = df['close'].rolling(20).mean()  # Error vì empty
-```
-
-**Đúng**:
-```python
-df = quote.history(start="2024-01-01", end="2024-12-31")
-if df.empty:
-    print("Không có dữ liệu!")
-else:
-    df['MA20'] = df['close'].rolling(20).mean()
-```
+**Khuyến nghị**:
+- Sử dụng **VCI**, **KBS** hoặc **MAS** cho nhu cầu dữ liệu **History** và **Intraday** vì tính ổn định và chi tiết cao. Dùng **VND** để lấy dữ liệu `history` cho các mã chỉ số đa dạng. Không sử dụng nguồn VCI trên Google Colab hoặc dịch vụ liên quan Google Cloud do chính sách chặn IP từ nguồn dữ liệu này.
