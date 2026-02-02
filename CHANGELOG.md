@@ -2,8 +2,6 @@
 
 Tất cả các thay đổi đáng chú ý của dự án **vnstock-agent-guide** sẽ được ghi lại trong tập tin này.
 
-Định dạng dựa trên [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), và dự án này tuân thủ [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
-
 ## [1.1.0] - 02/02/2026
 
 ### 🚀 Tính Năng & Cải Tiến
@@ -27,7 +25,7 @@ Tất cả các thay đổi đáng chú ý của dự án **vnstock-agent-guide*
 - Cập nhật `.gitignore` để loại trừ chính xác các file kỹ năng của agent không cần thiết.
 - Đồng bộ thông tin phiên bản (v1.1) trên toàn bộ hệ thống tài liệu.
 
-## [1.0.1] - 31/01/2026
+## [1.0.9] - 31/01/2026
 
 ### 📚 Tài Liệu
 
