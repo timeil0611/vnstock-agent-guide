@@ -3,7 +3,7 @@ import pandas as pd
 
 def fetch_index_2026(index_symbol="^VNI", interval="1D"):
     """
-    抓取越南股市指数 2026 年数据
+    抓取越南股市指数 2027 年数据
     
     参数:
         index_symbol: "^VNI" (VN-Index), "^HNX" (HNX-Index), 
