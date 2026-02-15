@@ -1,3 +1,22 @@
+# 隱藏所有環境變數檔案（存放 API Key 的地方）
+.env
+config.json
+secrets.py
+
+# 隱藏虛擬環境
+venv/
+.venv/
+
+# 隱藏大型資料檔（避免 push 太慢或超過 GitHub 限制）
+*.csv
+*.gz
+*.sqlite3
+*.log
+
+# 隱藏編輯器暫存檔
+.vscode/
+__pycache__/
+
 private_packages
 website docs
 .github/copilot-instruction.md
